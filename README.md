@@ -3,12 +3,16 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the FHEM home automation server via sockets, using
 the telnet port on FHEM with optional SSL (TLS) and password support.
+## Installation:
+In ```python-fhem/fhem```:
+```pip install .```
+
 ## Usage:
 ```
 import fhem
 
 fh = fhem.Fhem("myserver.home.org")
-# Send a command to FHEM
+# Send a command to FHEM (this automatically connects())
 fh.sendCmd("set lamp on")
 # Get a specific reading from a device
 temp = fh.getDevReading("LivingThermometer", "temperature")
@@ -20,10 +24,11 @@ fh.connect()
 if fh.connected():
     # Do things
 ```
-The library can create an event queue that uses a background thread to dispatch
-FHEM events:
+The library can create an event queue that uses a background thread to receive
+and dispatch FHEM events:
 ```
 try:
+    # Python 3.x
     import queue
 except:
     # Python 2.x
