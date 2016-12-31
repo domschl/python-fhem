@@ -1,0 +1,9 @@
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/fhem/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/fhem/*.egg-info
+
