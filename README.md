@@ -75,43 +75,55 @@ actually open the socket.
 * bSsl: boolean for SSL (TLS)
 * passord: (global) telnet password
 * loglevel: 0: no log, 1: errors, 2: info, 3: debug
+
 ### close()
 Closes socket connection.
+
 ### connect()
 create socket connection to server
+
 ### connected(self)
 Returns True if socket is connected to server.
+
 ### getDevReading(dev, reading, timeout=0.1)
 Get a specific reading from a FHEM device
 * dev: FHEM device
 * reading: name of FHEM reading
 * timeout: timeout for reply
+
 ### getDevReadings(dev, readings, timeout=0.1)
 Get a list of readings for one FHEM device
 * dev: FHEM device
 * readings: array of FHEM reading names
 * timeout: timeout for reply
+
 ### getDevState(dev, timeout=0.1)
 Get all FHEM device properties as JSON object
 * dev: FHEM device name
 * timeout: timeout for reply
+
 ### getFhemState(timeout=0.1)
 Get FHEM state of all devices, returns a large JSON object with
 every single FHEM device and reading state
 * timeout: timeout for reply
+
 ### logging(level)
 Set logging level,
 * level: 0: no log, 1: errors, 2: info, 3: debug
+
 ### recvNonblocking(timeout=0.1)
 Receives from server, if data available. Returns directly, if no
 data is available.
 * timeout: timeout in seconds
+
 ### send(buf)
 Sends a buffer to server
 * buf: binary buffer
+
 ### sendCmd(msg)
 Sends a comamnd to server, NL is appended.
 * msg: string with FHEM command, e.g. ```'set lamp on'```
+
 ### sendRcvCmd(msg, timeout=0.1, blocking=True)
 Sends a command to the server and waits for an immediate reply.
 * msg: FHEM command (NL is appended)
@@ -136,5 +148,6 @@ The filterlist works on client side.
 * eventtimeout: larger timeout for server keep-alive messages
 * serverregex: FHEM regex to restrict event messages on server side.
 * loglevel: 0: no log, 1: errors, 2: info, 3: debug
+
 ### close()
 Stop event thread and close socket. Note: The thread is stopped asynchronously upon completion of current activity.
