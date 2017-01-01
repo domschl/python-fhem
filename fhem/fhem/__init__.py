@@ -170,7 +170,7 @@ class Fhem:
         return data
 
     def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
-        '''Sens a command to the server and waits for an immediate reply.
+        '''Sends a command to the server and waits for an immediate reply.
         :param msg: FHEM command (\n is appended)
         :param timeout: waiting time for reply
         :param blocking: on True: use blocking socket communication (bool)'''
