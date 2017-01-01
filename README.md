@@ -67,7 +67,7 @@ while True:
 ## class Fhem()
 Connects to FHEM via socket communication with optional SSL and password support
 
-### __init__(server, port=7072, bSsl=False, password='', loglevel=1)
+### Fhem(server, port=7072, bSsl=False, password='', loglevel=1)
 Instantiate connector object, socket is not opened, use connect() to
 actually open the socket.
 * server: address of FHEM server
@@ -122,7 +122,7 @@ Sends a command to the server and waits for an immediate reply.
 ## class FhemEventQueue()
 Creates a thread that listens to FHEM events and dispatches them to a Python queue.
 
-### Fhem(server, que, port=7072, bSsl=False, password='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
+### FhemEventQueue(server, que, port=7072, bSsl=False, password='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
 * server: FHEM server address
 * que: Python Queue object, receives FHEM events as dictionaries
 * port: FHEM telnet port
