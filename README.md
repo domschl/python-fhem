@@ -121,7 +121,7 @@ Sends a buffer to server
 * buf: binary buffer
 
 ### sendCmd(msg)
-Sends a comamnd to server, NL is appended.
+Sends a command to server, NL is appended.
 * msg: string with FHEM command, e.g. ```'set lamp on'```
 
 ### sendRcvCmd(msg, timeout=0.1, blocking=True)

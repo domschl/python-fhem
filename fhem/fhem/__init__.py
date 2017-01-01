@@ -116,7 +116,7 @@ class Fhem:
             return False
 
     def sendCmd(self, msg):
-        '''Sends a comamnd to server, \n is appended.
+        '''Sends a command to server, \n is appended.
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
         if not self.connected():
