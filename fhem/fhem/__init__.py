@@ -238,6 +238,7 @@ class Fhem:
         :param msg: FHEM command (e.g. 'set lamp on')
         :param timeout: waiting time for reply
         :param blocking: (telnet only) on True: use blocking socket communication (bool)'''
+        data = b''
         if self.protocol == 'telnet':
             if not self.connected():
                 self.connect()
@@ -256,23 +257,6 @@ class Fhem:
                     else:
                         data = self.recvNonblocking(timeout)
                     self.sock.setblocking(True)
-
-                    try:
-                        sdata = data.decode('utf-8')
-                        jdata = json.loads(sdata)
-                    except:
-                        if self.loglevel > 0:
-                            print("E - Failed to decode json, exception raised.",
-                                  data)
-                        return {}
-                    if len(jdata[u'Results']) == 0:
-                        if self.loglevel > 0:
-                            print("E - Query had no result.")
-                        return {}
-                    else:
-                        if self.loglevel > 1:
-                            print("I - JSON answer received.")
-                        return jdata
                 else:
                     if self.loglevel > 0:
                         print("E - Failed to send msg, len=", len(msg),
@@ -284,15 +268,32 @@ class Fhem:
         else:
             ans = self.sendCmd(msg)
             if ans is not False:
-                return ans.read()
+                data = ans.read()
             else:
                 return False
+
+        try:
+            sdata = data.decode('utf-8')
+            jdata = json.loads(sdata)
+        except:
+            if self.loglevel > 0:
+                print("E - Failed to decode json, exception raised.",
+                      data)
+            return {}
+        if len(jdata[u'Results']) == 0:
+            if self.loglevel > 0:
+                print("E - Query had no result.")
+            return {}
+        else:
+            if self.loglevel > 1:
+                print("I - JSON answer received.")
+            return jdata
 
     def getDevState(self, dev, timeout=0.1):
         '''Get all FHEM device properties as JSON object
         :param dev: FHEM device name
         :param timeout: timeout for reply'''
-        if self.connection:
+        if self.connection or self.protocol != 'telnet':
             return self.sendRcvCmd("jsonlist2 " + dev, timeout=timeout)
         else:
             if self.loglevel > 0:
@@ -306,7 +307,7 @@ class Fhem:
         :param reading: name of FHEM reading
         :param timeout: timeout for reply'''
         read = None
-        state = self.getDevState(self, dev, timeout)
+        state = self.getDevState(dev, timeout=timeout)
         if state == {}:
             return None
         try:
@@ -314,6 +315,12 @@ class Fhem:
         except:
             if self.loglevel > 0:
                 print("E - Reading not defined:", dev, reading)
+                print(state['Results'])
+                print("U")
+                print(state['Results'][0])
+                print(state['Results'][0]['Readings'])
+                print(state['Results'][0]['Readings'][reading])
+                print(state['Results'][0]['Readings'][reading]['Value'])
             return read
         return read
 
@@ -339,7 +346,7 @@ class Fhem:
         '''Get FHEM state of all devices, returns a large JSON object with
         every single FHEM device and reading state
         :param timeout: timeout for reply'''
-        if self.connection:
+        if self.connection or self.protocol != 'telnet':
             return self.sendRcvCmd("jsonlist2", blocking=False,
                                    timeout=timeout)
         else:
