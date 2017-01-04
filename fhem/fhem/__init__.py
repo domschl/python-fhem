@@ -4,56 +4,85 @@ import json
 import socket
 import ssl
 import threading
-import sys
+import urllib
+import urllib.parse
+import urllib.request
+# import requests
+# import urllib.requests
 
 '''API for FHEM homeautomation server'''
+
 
 class Fhem:
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
     def __init__(self, server, port=7072,
-                 bSsl=False, password="", loglevel=1):
-        '''Instantiate connector object, socket is not opened, use connect() to
-        actually open the socket.
+                 bSsl=False, protocol="telnet", user="", password="",
+                 cafile="", loglevel=1):
+        '''Instantiate connector object, for telnet protocol socket is not
+        opened, use connect() to actually open the socket.
         :param server: address of FHEM server
         :param port: telnet port of server
-        :param bSsl: boolean for SSL (TLS)
-        :param passord: (global) telnet password
+        :param bSsl: boolean for SSL (TLS) [https as protocol sets bSsl=True]
+        :param protocol: 'http', 'https' or 'telnet'
+        :param cafile: path to public certificate of your root authority, if
+        left empty, https protocol will ignore certificate checks.
+        :param user: username for http validation
+        :param passord: (global) telnet/http password
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
+        validprots = ['http', 'https', 'telnet']
         self.server = server
         self.port = port
         self.bSsl = bSsl
+        self.user = user
         self.password = password
         self.loglevel = loglevel
         self.connection = False
+        self.cafile = cafile
+        if protocol in validprots:
+            self.protocol = protocol
+        else:
+            if loglevel > 0:
+                print("E - Invalid protocol: ", protocol)
+        if (protocol == "https") or (bSsl is True):
+            self.bSsl = True
+            self.baseurl = "https://"+server+":"+str(port)+"/fhem?XHR=1&cmd="
+        else:
+            if protocol == "http":
+                self.baseurl = "http://"+server+":"+str(port) + \
+                               "/fhem?XHR=1&cmd="
 
     def connect(self):
-        '''create socket connection to server'''
-        try:
-            if self.loglevel > 2:
-                print("D - creating socket...")
-            if self.bSsl:
-                self.bsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.sock = ssl.wrap_socket(self.bsock)
-                self.sock.connect((self.server, self.port))
+        if self.protocol == 'telnet':
+            '''create socket connection to server (telnet protocol only)'''
+            try:
+                if self.loglevel > 2:
+                    print("D - creating socket...")
+                if self.bSsl:
+                    self.bsock = socket.socket(socket.AF_INET,
+                                               socket.SOCK_STREAM)
+                    self.sock = ssl.wrap_socket(self.bsock)
+                    self.sock.connect((self.server, self.port))
+                    if self.loglevel > 1:
+                        print("I - Connecting to", self.server, "on port:",
+                              self.port, " with SSL (TLS)")
+                else:
+                    self.sock = socket.socket(socket.AF_INET,
+                                              socket.SOCK_STREAM)
+                    self.sock.connect((self.server, self.port))
+                    if self.loglevel > 1:
+                        print("I - Connecting to", self.server, "on port:",
+                              self.port, " no SSL")
+                self.connection = True
                 if self.loglevel > 1:
-                    print("I - Connecting to", self.server, "on port:",
-                          self.port, " with SSL (TLS)")
-            else:
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.sock.connect((self.server, self.port))
-                if self.loglevel > 1:
-                    print("I - Connecting to", self.server, "on port:",
-                          self.port, " no SSL")
-            self.connection = True
-            if self.loglevel > 1:
-                print("I - Connected to", self.server, "on port:", self.port)
-        except:
-            self.connection = False
-            if self.loglevel > 0:
-                print("E - Failed to connected to", self.server, "on port:",
-                      self.port)
+                    print("I - Connected to", self.server, "on port:",
+                          self.port)
+            except:
+                self.connection = False
+                if self.loglevel > 0:
+                    print("E - Failed to connected to", self.server,
+                          "on port:", self.port)
             return
         if self.password != "":
             time.sleep(0.1)
@@ -71,8 +100,11 @@ class Fhem:
                 print("I - Auth password sent to", self.server)
 
     def connected(self):
-        '''Returns True if socket is connected to server.'''
-        return self.connection
+        '''Returns True if socket is connected to server. (telnet only)'''
+        if self.protocol == 'telnet':
+            return self.connection
+        else:
+            return True
 
     def logging(self, level):
         '''Set logging level,
@@ -81,55 +113,92 @@ class Fhem:
         self.loglevel = level
 
     def close(self):
-        '''Closes socket connection.'''
-        if self.connection:
-            time.sleep(0.2)
-            self.sock.close()
-            self.connection = False
-            if self.loglevel > 1:
-                print("I - Disconnected from fhemserver")
-        else:
-            if self.loglevel > 0:
-                print("E - Cannot disconnect, not connected.")
+        '''Closes socket connection. (telnet only)'''
+        if self.protocol == 'telnet':
+            if self.connection:
+                time.sleep(0.2)
+                self.sock.close()
+                self.connection = False
+                if self.loglevel > 1:
+                    print("I - Disconnected from fhemserver")
+            else:
+                if self.loglevel > 0:
+                    print("E - Cannot disconnect, not connected.")
 
     def send(self, buf):
         '''Sends a buffer to server
         :param buf: binary buffer'''
-        if not self.connected():
-            self.connect()
-        if self.connection:
-            try:
-                self.sock.sendall(buf)
-                if self.loglevel > 1:
-                    print("I - Sent msg, len=", len(buf))
-                return True
-            except:
+        if self.protocol == 'telnet':
+            if not self.connected():
+                self.connect()
+            if self.connection:
+                try:
+                    self.sock.sendall(buf)
+                    if self.loglevel > 1:
+                        print("I - Sent msg, len=", len(buf))
+                    return True
+                except:
+                    if self.loglevel > 0:
+                        print("E - Failed to send msg, len=", len(buf),
+                              "exception raised.")
+                    self.connection = False
+                    return False
+            else:
                 if self.loglevel > 0:
                     print("E - Failed to send msg, len=", len(buf),
-                          "exception raised.")
-                self.connection = False
+                          "not connected.")
                 return False
         else:
-            if self.loglevel > 0:
-                print("E - Failed to send msg, len=", len(buf),
-                      "not connected.")
-            return False
+            try:
+                if self.loglevel > 2:
+                    print("D - Cmd:", buf)
+                cmd = urllib.parse.quote(buf)
+                if self.loglevel > 2:
+                    print("D - Cmd-enc:", cmd)
+                ccmd = self.baseurl + cmd
+                if self.loglevel > 1:
+                    print("I - request: ", ccmd)
+                if self.user == "":
+                    if self.cafile != "":
+                        ans = urllib.request.urlopen(ccmd, cafile=self.cafile)
+                    else:
+                        if self.bSsl:
+                            ctx = ssl.create_default_context()
+                            ctx.check_hostname = False
+                            ctx.verify_mode = ssl.CERT_NONE
+                            if self.loglevel > 1:
+                                print("W - Certificate check disabled," +
+                                      " since no cafile= given")
+                            ans = urllib.request.urlopen(ccmd, context=ctx)
+                        else:
+                            ans = urllib.request.urlopen(ccmd)
+                else:
+                    ans = urllib.request.urlopen(ccmd, auth=(self.user,
+                                                             self.password))
+                return ans
+            except urllib.error.URLError as e:
+                if self.loglevel > 0:
+                    print("E - Failed to send msg, len=", len(buf), e)
+                return False
 
     def sendCmd(self, msg):
-        '''Sends a command to server, \n is appended.
+        '''Sends a command to server.
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
-        if not self.connected():
-            self.connect()
-        if self.connection:
-            msg = msg + "\n"
-            cmd = msg.encode('utf-8')
-            return self.send(cmd)
+        if self.protocol == 'telnet':
+            if not self.connected():
+                self.connect()
+            if self.connection:
+                msg = msg + "\n"
+                cmd = msg.encode('utf-8')
+                return self.send(cmd)
+            else:
+                if self.loglevel > 0:
+                    print("E - Failed to send msg, len=", len(msg),
+                          "not connected.")
+                return False
         else:
-            if self.loglevel > 0:
-                print("E - Failed to send msg, len=", len(msg),
-                      "not connected.")
-            return False
+            return self.send(msg)
 
     def recvNonblocking(self, timeout=0.1):
         '''Receives from server, if data available. Returns directly, if no
@@ -147,11 +216,6 @@ class Fhem:
                 if self.loglevel > 3:
                     print("D - exception in non-blocking")
                     time.sleep(timeout)
-            # except:
-            #    self.connection = False
-            #    if self.loglevel > 0:
-            #        print("D - Non-timeout socket error!")
-            #        print("D - Unexpected error:", sys.exc_info()[0])
             wok = 1
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
@@ -171,51 +235,58 @@ class Fhem:
 
     def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
         '''Sends a command to the server and waits for an immediate reply.
-        :param msg: FHEM command (\n is appended)
+        :param msg: FHEM command (e.g. 'set lamp on')
         :param timeout: waiting time for reply
-        :param blocking: on True: use blocking socket communication (bool)'''
-        if not self.connected():
-            self.connect()
-        if self.connection:
-            if self.sendCmd(msg):
-                time.sleep(timeout)
-                data = []
-                if blocking is True:
+        :param blocking: (telnet only) on True: use blocking socket communication (bool)'''
+        if self.protocol == 'telnet':
+            if not self.connected():
+                self.connect()
+            if self.connection:
+                if self.sendCmd(msg):
+                    time.sleep(timeout)
+                    data = []
+                    if blocking is True:
+                        try:
+                            data = self.sock.recv(32000)
+                        except:
+                            if self.loglevel > 0:
+                                print("E - Failed to recv msg, exception raised.",
+                                      data)
+                            return {}
+                    else:
+                        data = self.recvNonblocking(timeout)
+                    self.sock.setblocking(True)
+
                     try:
-                        data = self.sock.recv(32000)
+                        sdata = data.decode('utf-8')
+                        jdata = json.loads(sdata)
                     except:
                         if self.loglevel > 0:
-                            print("E - Failed to recv msg, exception raised.",
+                            print("E - Failed to decode json, exception raised.",
                                   data)
                         return {}
+                    if len(jdata[u'Results']) == 0:
+                        if self.loglevel > 0:
+                            print("E - Query had no result.")
+                        return {}
+                    else:
+                        if self.loglevel > 1:
+                            print("I - JSON answer received.")
+                        return jdata
                 else:
-                    data = self.recvNonblocking(timeout)
-                self.sock.setblocking(True)
-
-                try:
-                    sdata = data.decode('utf-8')
-                    jdata = json.loads(sdata)
-                except:
                     if self.loglevel > 0:
-                        print("E - Failed to decode json, exception raised.",
-                              data)
-                    return {}
-                if len(jdata[u'Results']) == 0:
-                    if self.loglevel > 0:
-                        print("E - Query had no result.")
-                    return {}
-                else:
-                    if self.loglevel > 1:
-                        print("I - JSON answer received.")
-                    return jdata
+                        print("E - Failed to send msg, len=", len(msg),
+                              "sendcmd failed.")
             else:
                 if self.loglevel > 0:
                     print("E - Failed to send msg, len=", len(msg),
-                          "sendcmd failed.")
+                          "not connected.")
         else:
-            if self.loglevel > 0:
-                print("E - Failed to send msg, len=", len(msg),
-                      "not connected.")
+            ans = self.sendCmd(msg)
+            if ans is not False:
+                return ans.read()
+            else:
+                return False
 
     def getDevState(self, dev, timeout=0.1):
         '''Get all FHEM device properties as JSON object
