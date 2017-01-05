@@ -235,7 +235,7 @@ class Fhem:
         :param reading: name of FHEM reading
         :param timeout: timeout for reply'''
         read = None
-        state = self.getDevState(self, dev, timeout)
+        state = self.getDevState(dev, timeout=timeout)
         if state == {}:
             return None
         try:
@@ -252,13 +252,13 @@ class Fhem:
         'param readings': array of FHEM reading names
         :param timeout: timeout for reply'''
         reads = {}
-        state = self.getDevState(dev, timeout)
+        state = self.getDevState(dev, timeout=timeout)
         if state == {}:
             return reads
         for reading in readings:
             try:
-                reads[reading] = state['Results'][
-                    0]['Readings'][reading]['Value']
+                r1 = state['Results'][0]
+                reads[reading] = r1['Readings'][reading]['Value']
             except:
                 if self.loglevel > 0:
                     print("E - Reading not defined:", dev, reading)
