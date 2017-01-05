@@ -252,7 +252,7 @@ class Fhem:
         'param readings': array of FHEM reading names
         :param timeout: timeout for reply'''
         reads = {}
-        state = self.getDevState(self, dev, timeout)
+        state = self.getDevState(dev, timeout)
         if state == {}:
             return reads
         for reading in readings:
