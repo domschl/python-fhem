@@ -43,9 +43,9 @@ To connect via https with SSL and basicAuth:
 ```
 fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https', loglevel=3,
                cafile=mycertfile, username="myuser", password="secretsauce")
-               ```
+```
 
-### Event queues
+### Event queues (currently telnet only)
 
 The library can create an event queue that uses a background thread to receive
 and dispatch FHEM events:
