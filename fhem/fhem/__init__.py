@@ -396,7 +396,7 @@ class Fhem:
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
-    def __init__(self, server,  que, port=7072, protocol='telnet'
+    def __init__(self, server,  que, port=7072, protocol='telnet',
                  ssl=False, username="", password="", cafile="",
                  filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
