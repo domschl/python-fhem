@@ -1,23 +1,23 @@
 # python-fhem
 Python FHEM (home automation server) API
 
-Simple API to connect to the FHEM home automation server via sockets, using
-the telnet port on FHEM with optional SSL (TLS) and password support.
+Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password
+or basicAuth support.
 ## Installation:
 ### PIP installation (PyPI):
 ```
-pip install fhem
+pip install [-U] fhem
 ```
 
 ### From source:
 In ```python-fhem/fhem```:
 
 ```
-pip install .
+pip install [-U] .
 ```
 or, as developer installation, allowing inplace editing:
 ```
-pip install -e .
+pip install [-U] -e .
 ```
 
 ## Usage:
@@ -27,18 +27,23 @@ pip install -e .
 import fhem
 
 fh = fhem.Fhem("myserver.home.org")
-# Send a command to FHEM (this automatically connects())
+# Send a command to FHEM (this automatically connects() in case of telnet)
 fh.sendCmd("set lamp on")
 # Get a specific reading from a device
 temp = fh.getDevReading("LivingThermometer", "temperature")
 ```
-To connect with SSL and password:
+To connect via with SSL and password:
 ```
 fh = fhem.Fhem("myserver.home.org", port=7073, bSsl=True, password='mysecret')
 fh.connect()
 if fh.connected():
     # Do things
 ```
+To connect via https with SSL and basicAuth:
+```
+fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https', loglevel=3,
+               cafile=mycertfile, username="myuser", password="secretsauce")
+               ```
 
 ### Event queues
 
@@ -67,23 +72,26 @@ while True:
 ## class Fhem()
 Connects to FHEM via socket communication with optional SSL and password support
 
-### Fhem(server, port=7072, bSsl=False, password='', loglevel=1)
+### Fhem(server, port=7072, ssl=False, username='', password='', cafile='', loglevel=1)
 Instantiate connector object, socket is not opened, use connect() to
 actually open the socket.
 * server: address of FHEM server
 * port: telnet port of server
-* bSsl: boolean for SSL (TLS)
-* passord: (global) telnet password
+* ssl: boolean for SSL (TLS)
+* username: for http(s) basicAuth
+* password: (global) telnet or http(s) basicAuth password
+* cafile: path to a certificate authority PEM file, if ommitted server
+SLL certificate is not checked.
 * loglevel: 0: no log, 1: errors, 2: info, 3: debug
 
 ### close()
 Closes socket connection.
 
 ### connect()
-create socket connection to server
+Telnet: create socket connection to server, only used for telnet connections
 
 ### connected(self)
-Returns True if socket is connected to server.
+Telnet: Returns True if socket is connected to server.
 
 ### getDevReading(dev, reading, timeout=0.1)
 Get a specific reading from a FHEM device
@@ -111,11 +119,6 @@ every single FHEM device and reading state
 Set logging level,
 * level: 0: no log, 1: errors, 2: info, 3: debug
 
-### recvNonblocking(timeout=0.1)
-Receives from server, if data available. Returns directly, if no
-data is available.
-* timeout: timeout in seconds
-
 ### send(buf)
 Sends a buffer to server
 * buf: binary buffer
@@ -138,9 +141,11 @@ Creates a thread that listens to FHEM events and dispatches them to a Python que
 * server: FHEM server address
 * que: Python Queue object, receives FHEM events as dictionaries
 * port: FHEM telnet port
-* port: telnet port of server
-* bSsl: boolean for SSL (TLS)
-* passord: (global) telnet password
+* ssl: boolean for SSL (TLS)
+* username: for http(s) basicAuth
+* password: (global) telnet or http(s) basicAuth password
+* cafile: path to a certificate authority PEM file, if ommitted server
+SLL certificate is not checked.
 * filterlist: array of filter dictionaires ```[{"dev"="lamp1"}, {"dev"="livingtemp", "reading"="temperature"}]```.
 A filter dictionary can contain devstate (type of FHEM device), dev (FHEM device name) and/or reading conditions.
 The filterlist works on client side.

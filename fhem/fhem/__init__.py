@@ -36,9 +36,9 @@ class Fhem:
                  cafile="", loglevel=1):
         '''Instantiate connector object.
         :param server: address of FHEM server
-        :param port: telnet port of server
+        :param port: telnet/http(s) port of server
+        :param protocol: 'telnet', 'http' or 'https'
         :param ssl: boolean for SSL (TLS) [https as protocol sets ssl=True]
-        :param protocol: 'http', 'https' or 'telnet'
         :param cafile: path to public certificate of your root authority, if
         left empty, https protocol will ignore certificate checks.
         :param username: username for http(s) basicAuth validation
@@ -396,15 +396,18 @@ class Fhem:
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
-    def __init__(self, server,  que, port=7072,
-                 ssl=False, password="", filterlist=None, timeout=0.1,
+    def __init__(self, server,  que, port=7072, protocol='telnet'
+                 ssl=False, username="", password="", cafile="",
+                 filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
         ''':param server: FHEM server address
         :param que: Python Queue object, receives FHEM events as dictionaries
         :param port: FHEM telnet port
-        :param port: telnet port of server
+        :param protocol: 'telnet', 'http' or 'https'
+        :param port: telnet/http(s) port of server
         :param ssl: boolean for SSL (TLS)
-        :param password: (global) telnet password
+        :param username: http(s) basicAuth username
+        :param password: (global) telnet password or http(s) basicAuth password
         :param filterlist: array of filter dictionaires [{"dev"="lamp1"},
         {"dev"="livingtemp", "reading"="temperature"}]. A
         filter dictionary can contain devstate (type of FHEM device), dev (FHEM
@@ -419,8 +422,11 @@ class FhemEventQueue:
         self.informcmd = "inform timer"
         if serverregex is not None:
             self.informcmd += " " + serverregex
-        self.fhem = Fhem(server=server, port=port, ssl=ssl,
-                         password=password, loglevel=loglevel)
+        if protocol != 'telnet':
+            print("E - ONLY TELNET is supported for EventQueue")
+            return
+        self.fhem = Fhem(server=server, port=port, ssl=ssl, username=username,
+                         password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
         self.EventThread = threading.Thread(target=self._EventWorkerThread,
                                             args=(que, filterlist,
