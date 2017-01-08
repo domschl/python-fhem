@@ -105,16 +105,13 @@ class Fhem:
                 p1 = self.sock.recv(32000)
                 if (self.loglevel > 2):
                     print("auth-repl1:", p1)
-                '''p2 = self._recvNonblocking(0.1)
-                if (self.loglevel > 2):
-                    print("auth-repl2:", p2)'''
             except:
                 if self.loglevel > 0:
                     print("E - Failed to recv auth reply, exception raised.")
                 self.connection = False
                 return
             if self.loglevel > 1:
-                print("I - Auth password sent to", self.server, self.connection)
+                print("I - Auth password sent to", self.server)
 
     def connected(self):
         '''Returns True if socket is connected to server. (telnet only)'''
