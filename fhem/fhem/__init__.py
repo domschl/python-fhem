@@ -68,7 +68,7 @@ class Fhem:
             if protocol == "http":
                 self.baseurlauth = "http://"+server+":"+str(port)+"/"
                 self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
-        if (protocol == "https" or protocol == "http") and username != "":
+        if protocol == "https" or protocol == "http":
             self._installOpener()
 
     def connect(self):
@@ -102,28 +102,28 @@ class Fhem:
                     print("E - Failed to connected to", self.server,
                           "on port:", self.port)
                 return
-        if self.password != "":
-            # time.sleep(1.0)
-            # self.sendCmd("\n")
-            # prmpt = self._recvNonblocking(4.0)
-            prmpt = self.sock.recv(32000)
-            if (self.loglevel > 2):
-                print("auth-prompt:", prmpt)
-            self.nolog = True
-            self.sendCmd(self.password)
-            self.nolog = False
-            time.sleep(0.1)
-            try:
-                p1 = self.sock.recv(32000)
+            if self.password != "":
+                # time.sleep(1.0)
+                # self.sendCmd("\n")
+                # prmpt = self._recvNonblocking(4.0)
+                prmpt = self.sock.recv(32000)
                 if (self.loglevel > 2):
-                    print("auth-repl1:", p1)
-            except:
-                if self.loglevel > 0:
-                    print("E - Failed to recv auth reply, exception raised.")
-                self.connection = False
-                return
-            if self.loglevel > 1:
-                print("I - Auth password sent to", self.server)
+                    print("auth-prompt:", prmpt)
+                self.nolog = True
+                self.sendCmd(self.password)
+                self.nolog = False
+                time.sleep(0.1)
+                try:
+                    p1 = self.sock.recv(32000)
+                    if (self.loglevel > 2):
+                        print("auth-repl1:", p1)
+                except:
+                    if self.loglevel > 0:
+                        print("E - Failed to recv auth reply.")
+                    self.connection = False
+                    return
+                if self.loglevel > 1:
+                    print("I - Auth password sent to", self.server)
 
     def connected(self):
         '''Returns True if socket is connected to server. (telnet only)'''
@@ -404,6 +404,7 @@ class FhemEventQueue:
         :param que: Python Queue object, receives FHEM events as dictionaries
         :param port: FHEM telnet port
         :param protocol: 'telnet', 'http' or 'https'
+          NOTE: for FhemEventQueue, currently only 'telnet' is supported!
         :param port: telnet/http(s) port of server
         :param ssl: boolean for SSL (TLS)
         :param username: http(s) basicAuth username

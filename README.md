@@ -34,7 +34,7 @@ temp = fh.getDevReading("LivingThermometer", "temperature")
 ```
 To connect via with SSL and password:
 ```
-fh = fhem.Fhem("myserver.home.org", port=7073, bSsl=True, password='mysecret')
+fh = fhem.Fhem("myserver.home.org", port=7073, ssl=True, password='mysecret')
 fh.connect()
 if fh.connected():
     # Do things
@@ -137,10 +137,11 @@ Sends a command to the server and waits for an immediate reply.
 ## class FhemEventQueue()
 Creates a thread that listens to FHEM events and dispatches them to a Python queue.
 
-### FhemEventQueue(server, que, port=7072, bSsl=False, password='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
+### FhemEventQueue(server, que, port=7072, protocol='telnet', ssl=False, username='', password='', cafile='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
 * server: FHEM server address
 * que: Python Queue object, receives FHEM events as dictionaries
 * port: FHEM telnet port
+* protocol: 'telnet' (or not yet implemented: http, https)
 * ssl: boolean for SSL (TLS)
 * username: for http(s) basicAuth
 * password: (global) telnet or http(s) basicAuth password
