@@ -220,40 +220,6 @@ class Fhem:
                 if self.loglevel > 1:
                     print("I - request: ", ccmd)
                 ans = urlopen(ccmd)
-
-                '''
-                if self.cafile != "":
-                    # ans = urlopen(ccmd, cafile=self.cafile)
-                    if self.username != "":
-                        if self.loglevel > 2:
-                            print("D - using opener")
-                        # self._basicAuth()
-                        ans = urlopen(ccmd)  # , cafile=self.cafile)
-
-                        # result = self.opener.open(ccmd, cafile=self.cafile)
-                        # ans = result.read()
-                    else:
-                        ans = urlopen(ccmd, cafile=self.cafile)
-                else:
-                    if self.ssl:
-                        ctx = ssl.create_default_context()
-                        ctx.check_hostname = False
-                        ctx.verify_mode = ssl.CERT_NONE
-                        if self.loglevel > 1:
-                            print("W - Certificate check disabled," +
-                                  " since no cafile= given")
-                        if self.username != "":
-                            result = self.opener.open(ccmd, context=ctx)
-                            ans = result.read()
-                        else:
-                            ans = urlopen(ccmd, context=ctx)
-                    else:
-                        if self.username != "":
-                            result = self.opener.open(ccmd)
-                            ans = result.read()
-                        else:
-                            ans = urlopen(ccmd)
-                    '''
                 return ans
             except URLError as e:
                 if self.loglevel > 0:
