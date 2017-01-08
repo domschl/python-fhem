@@ -9,11 +9,21 @@ try:
     from urllib.parse import quote
     from urllib.request import urlopen
     from urllib.error import URLError
+    from urllib.request import HTTPSHandler
+    from urllib.request import HTTPPasswordMgrWithDefaultRealm
+    from urllib.request import HTTPBasicAuthHandler
+    from urllib.request import build_opener
+    from urllib.request import install_opener
 except:
     # Python 2.x
     from urllib2 import quote
     from urllib2 import urlopen
     from urllib2 import URLError
+    from urllib2 import HTTPSHandler
+    from urllib2 import HTTPPasswordMgrWithDefaultRealm
+    from urllib2 import HTTPBasicAuthHandler
+    from urllib2 import build_opener
+    from urllib2 import install_opener
 
 '''API for FHEM homeautomation server'''
 
@@ -22,25 +32,24 @@ class Fhem:
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
     def __init__(self, server, port=7072,
-                 ssl=False, protocol="telnet", user="", password="",
+                 ssl=False, protocol="telnet", username="", password="",
                  cafile="", loglevel=1):
-        '''Instantiate connector object, for telnet protocol socket is not
-        opened, use connect() to actually open the socket.
+        '''Instantiate connector object.
         :param server: address of FHEM server
         :param port: telnet port of server
         :param ssl: boolean for SSL (TLS) [https as protocol sets ssl=True]
         :param protocol: 'http', 'https' or 'telnet'
         :param cafile: path to public certificate of your root authority, if
         left empty, https protocol will ignore certificate checks.
-        :param user: username for http validation
-        :param passord: (global) telnet/http password
+        :param username: username for http(s) basicAuth validation
+        :param password: (global) telnet or http(s) password
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
         validprots = ['http', 'https', 'telnet']
         self.server = server
         self.port = port
         self.ssl = ssl
-        self.user = user
+        self.username = username
         self.password = password
         self.loglevel = loglevel
         self.connection = False
@@ -53,11 +62,14 @@ class Fhem:
                 print("E - Invalid protocol: ", protocol)
         if (protocol == "https") or (ssl is True):
             self.ssl = True
-            self.baseurl = "https://"+server+":"+str(port)+"/fhem?XHR=1&cmd="
+            self.baseurlauth = "https://"+server+":"+str(port)+"/"
+            self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
         else:
             if protocol == "http":
-                self.baseurl = "http://"+server+":"+str(port) + \
-                               "/fhem?XHR=1&cmd="
+                self.baseurlauth = "http://"+server+":"+str(port)+"/"
+                self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
+        if (protocol == "https" or protocol == "http") and username != "":
+            self._installOpener()
 
     def connect(self):
         if self.protocol == 'telnet':
@@ -139,17 +151,47 @@ class Fhem:
                 if self.loglevel > 0:
                     print("E - Cannot disconnect, not connected.")
 
+    def _installOpener(self):
+        self.opener = None
+        if self.username != "":
+            self.password_mgr = HTTPPasswordMgrWithDefaultRealm()
+            self.password_mgr.add_password(None, self.baseurlauth,
+                                           self.username, self.password)
+            self.auth_handler = HTTPBasicAuthHandler(self.password_mgr)
+        if self.ssl is True:
+            if self.cafile == "":
+                self.context = ssl.create_default_context()
+                self.context.check_hostname = False
+                self.context.verify_mode = ssl.CERT_NONE
+            else:
+                self.context = ssl.create_default_context()
+                self.context.load_verify_locations(cafile=self.cafile)
+                self.context.verify_mode = ssl.CERT_REQUIRED
+            self.httpsHandler = HTTPSHandler(context=self.context)
+            if self.username != "":
+                self.opener = build_opener(self.httpsHandler,
+                                           self.auth_handler)
+            else:
+                self.opener = build_opener(self.httpsHandler)
+        else:
+            if self.username != "":
+                self.opener = build_opener(self.auth_handler)
+        if self.opener is not None:
+            if self.loglevel > 2:
+                print("D - Setting up opener on: ", self.baseurlauth)
+            install_opener(self.opener)
+
     def send(self, buf):
         '''Sends a buffer to server
         :param buf: binary buffer'''
         if self.protocol == 'telnet':
             if not self.connected():
                 if self.loglevel > 2:
-                    print("Not connected, trying to connect...")
+                    print("D - Not connected, trying to connect...")
                 self.connect()
             if self.connected():
                 if self.loglevel > 2:
-                    print("Connected, sending...")
+                    print("D - Connected, sending...")
                 try:
                     self.sock.sendall(buf)
                     if self.loglevel > 1:
@@ -166,7 +208,7 @@ class Fhem:
                     print("E - Failed to send msg, len=", len(buf),
                           "not connected.")
                 return False
-        else:
+        else:  # HTTP(S)
             try:
                 if self.loglevel > 2:
                     print("D - Cmd:", buf)
@@ -177,23 +219,41 @@ class Fhem:
                 ccmd = self.baseurl + cmd
                 if self.loglevel > 1:
                     print("I - request: ", ccmd)
-                if self.user == "":
-                    if self.cafile != "":
-                        ans = urlopen(ccmd, cafile=self.cafile)
+                ans = urlopen(ccmd)
+
+                '''
+                if self.cafile != "":
+                    # ans = urlopen(ccmd, cafile=self.cafile)
+                    if self.username != "":
+                        if self.loglevel > 2:
+                            print("D - using opener")
+                        # self._basicAuth()
+                        ans = urlopen(ccmd)  # , cafile=self.cafile)
+
+                        # result = self.opener.open(ccmd, cafile=self.cafile)
+                        # ans = result.read()
                     else:
-                        if self.ssl:
-                            ctx = ssl.create_default_context()
-                            ctx.check_hostname = False
-                            ctx.verify_mode = ssl.CERT_NONE
-                            if self.loglevel > 1:
-                                print("W - Certificate check disabled," +
-                                      " since no cafile= given")
+                        ans = urlopen(ccmd, cafile=self.cafile)
+                else:
+                    if self.ssl:
+                        ctx = ssl.create_default_context()
+                        ctx.check_hostname = False
+                        ctx.verify_mode = ssl.CERT_NONE
+                        if self.loglevel > 1:
+                            print("W - Certificate check disabled," +
+                                  " since no cafile= given")
+                        if self.username != "":
+                            result = self.opener.open(ccmd, context=ctx)
+                            ans = result.read()
+                        else:
                             ans = urlopen(ccmd, context=ctx)
+                    else:
+                        if self.username != "":
+                            result = self.opener.open(ccmd)
+                            ans = result.read()
                         else:
                             ans = urlopen(ccmd)
-                else:  # XXX
-                    print("NOT IMPLEMENTED - USER / PWD!")
-                    ans = urlopen(ccmd, auth=(self.user, self.password))
+                    '''
                 return ans
             except URLError as e:
                 if self.loglevel > 0:
@@ -205,7 +265,7 @@ class Fhem:
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
         if self.loglevel > 2 and self.nolog is not True:
-            print("Sending: ", msg)
+            print("D - Sending: ", msg)
         if self.protocol == 'telnet':
             if not self.connected():
                 self.connect()
@@ -378,7 +438,7 @@ class FhemEventQueue:
         :param port: FHEM telnet port
         :param port: telnet port of server
         :param ssl: boolean for SSL (TLS)
-        :param passord: (global) telnet password
+        :param password: (global) telnet password
         :param filterlist: array of filter dictionaires [{"dev"="lamp1"},
         {"dev"="livingtemp", "reading"="temperature"}]. A
         filter dictionary can contain devstate (type of FHEM device), dev (FHEM
