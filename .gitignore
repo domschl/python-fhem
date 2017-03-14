@@ -3,6 +3,7 @@
 
 # Setuptools distribution folder.
 /fhem/dist/
+/fhem/build/
 
 # Python egg metadata, regenerated from source files by setuptools.
 /fhem/*.egg-info
