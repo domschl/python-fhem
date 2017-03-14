@@ -14,7 +14,7 @@ try:
     from urllib.request import HTTPBasicAuthHandler
     from urllib.request import build_opener
     from urllib.request import install_opener
-except:
+except ImportError:
     # Python 2.x
     from urllib2 import quote
     from urllib2 import urlopen
@@ -26,6 +26,7 @@ except:
     from urllib2 import install_opener
 
 '''API for FHEM homeautomation server'''
+__version__ = '0.3.0'
 
 
 class Fhem:
@@ -96,7 +97,7 @@ class Fhem:
                 if self.loglevel > 1:
                     print("I - Connected to", self.server, "on port:",
                           self.port)
-            except:
+            except socket.error:
                 self.connection = False
                 if self.loglevel > 0:
                     print("E - Failed to connected to", self.server,
@@ -117,7 +118,7 @@ class Fhem:
                     p1 = self.sock.recv(32000)
                     if (self.loglevel > 2):
                         print("auth-repl1:", p1)
-                except:
+                except socket.error:
                     if self.loglevel > 0:
                         print("E - Failed to recv auth reply.")
                     self.connection = False
@@ -261,7 +262,7 @@ class Fhem:
             data = b''
             try:
                 data = self.sock.recv(32000)
-            except:  # (socket.timeout, ssl.SSLWantReadError):
+            except socket.error:
                 if self.loglevel > 3:
                     print("D - exception in non-blocking")
                     time.sleep(timeout)
@@ -275,7 +276,7 @@ class Fhem:
                         wok = 0
                     else:
                         data += datai
-                except:
+                except socket.error:
                     wok = 0
                     if self.loglevel > 3:
                         print("D - exception in non-blocking")
@@ -285,7 +286,7 @@ class Fhem:
     def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
         if self.loglevel > 0:
             print("Deprecation: use send_recv_cmd instead of sendRcvCmd")
-            self.send_recv_cmd(msg, timeout, blocking):
+            self.send_recv_cmd(msg, timeout, blocking)
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
         '''Sends a command to the server and waits for an immediate reply.
@@ -304,7 +305,7 @@ class Fhem:
                     if blocking is True:
                         try:
                             data = self.sock.recv(32000)
-                        except:
+                        except socket.error:
                             if self.loglevel > 0:
                                 print("E - Failed to recv msg.", data)
                             return {}
@@ -450,6 +451,7 @@ class FhemEventQueue:
         side.
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
+        self.loglevel = loglevel
         self.informcmd = "inform timer"
         if serverregex is not None:
             self.informcmd += " " + serverregex
