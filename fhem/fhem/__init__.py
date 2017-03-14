@@ -69,7 +69,7 @@ class Fhem:
                 self.baseurlauth = "http://"+server+":"+str(port)+"/"
                 self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
         if protocol == "https" or protocol == "http":
-            self._installOpener()
+            self._install_opener()
 
     def connect(self):
         if self.protocol == 'telnet':
@@ -104,13 +104,13 @@ class Fhem:
                 return
             if self.password != "":
                 # time.sleep(1.0)
-                # self.sendCmd("\n")
-                # prmpt = self._recvNonblocking(4.0)
+                # self.send_cmd("\n")
+                # prmpt = self._recv_nonblocking(4.0)
                 prmpt = self.sock.recv(32000)
                 if (self.loglevel > 2):
                     print("auth-prompt:", prmpt)
                 self.nolog = True
-                self.sendCmd(self.password)
+                self.send_cmd(self.password)
                 self.nolog = False
                 time.sleep(0.1)
                 try:
@@ -151,7 +151,7 @@ class Fhem:
                 if self.loglevel > 0:
                     print("E - Cannot disconnect, not connected.")
 
-    def _installOpener(self):
+    def _install_opener(self):
         self.opener = None
         if self.username != "":
             self.password_mgr = HTTPPasswordMgrWithDefaultRealm()
@@ -227,6 +227,11 @@ class Fhem:
                 return False
 
     def sendCmd(self, msg):
+        if self.loglevel > 0:
+            print("Deprecation: please use self_cmd instead of selfCmd")
+        self.send_cmd(msg)
+
+    def send_cmd(self, msg):
         '''Sends a command to server.
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
@@ -247,7 +252,7 @@ class Fhem:
         else:
             return self.send(msg)
 
-    def _recvNonblocking(self, timeout=0.1):
+    def _recv_nonblocking(self, timeout=0.1):
         if not self.connected():
             self.connect()
         data = b''
@@ -278,6 +283,11 @@ class Fhem:
         return data
 
     def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
+        if self.loglevel > 0:
+            print("Deprecation: use send_recv_cmd instead of sendRcvCmd")
+            self.send_recv_cmd(msg, timeout, blocking):
+
+    def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
         '''Sends a command to the server and waits for an immediate reply.
         :param msg: FHEM command (e.g. 'set lamp on')
         :param timeout: waiting time for reply
@@ -288,7 +298,7 @@ class Fhem:
             if not self.connected():
                 self.connect()
             if self.connection:
-                if self.sendCmd(msg):
+                if self.send_cmd(msg):
                     time.sleep(timeout)
                     data = []
                     if blocking is True:
@@ -299,18 +309,18 @@ class Fhem:
                                 print("E - Failed to recv msg.", data)
                             return {}
                     else:
-                        data = self._recvNonblocking(timeout)
+                        data = self._recv_nonblocking(timeout)
                     self.sock.setblocking(True)
                 else:
                     if self.loglevel > 0:
                         print("E - Failed to send msg, len=", len(msg),
-                              "sendcmd failed.")
+                              "send_cmd failed.")
             else:
                 if self.loglevel > 0:
                     print("E - Failed to send msg, len=", len(msg),
                           "not connected.")
         else:
-            ans = self.sendCmd(msg)
+            ans = self.send_cmd(msg)
             if ans is not False:
                 data = ans.read()
             else:
@@ -334,11 +344,16 @@ class Fhem:
             return jdata
 
     def getDevState(self, dev, timeout=0.1):
+        if self.loglevel > 0:
+            print("Deprecation: use get_dev_state insteadd of getDevState")
+            self.get_dev_state(dev, timeout)
+
+    def get_dev_state(self, dev, timeout=0.1):
         '''Get all FHEM device properties as JSON object
         :param dev: FHEM device name
         :param timeout: timeout for reply'''
         if self.connection or self.protocol != 'telnet':
-            return self.sendRcvCmd("jsonlist2 " + dev, timeout=timeout)
+            return self.send_recv_cmd("jsonlist2 " + dev, timeout=timeout)
         else:
             if self.loglevel > 0:
                 print("E - Failed to get dev state for", dev,
@@ -346,12 +361,17 @@ class Fhem:
             return {}
 
     def getDevReading(self, dev, reading, timeout=0.1):
+        if loglevel > 0:
+            print("Deprecation: use get_dev_reading instead of getDevReading")
+            self.get_dev_reading(dev, reading, timeout)
+
+    def get_dev_reading(self, dev, reading, timeout=0.1):
         '''Get a specific reading from a FHEM device
         :param dev: FHEM device
         :param reading: name of FHEM reading
         :param timeout: timeout for reply'''
         read = None
-        state = self.getDevState(dev, timeout=timeout)
+        state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
             return None
         try:
@@ -362,13 +382,18 @@ class Fhem:
             return read
         return read
 
-    def getDevReadings(self, dev, readings, timeout=0.1):
+    def getDevReadings(self, dev, reading, timeout=0.1):
+        if loglevel > 0:
+            print("Deprecation: use get_dev_reading instead of getDevReading")
+            self.get_dev_readings(dev, reading, timeout)
+
+    def get_dev_readings(self, dev, readings, timeout=0.1):
         '''Get a list of readings for one FHEM device
         :param dev: FHEM device
         'param readings': array of FHEM reading names
         :param timeout: timeout for reply'''
         reads = {}
-        state = self.getDevState(dev, timeout=timeout)
+        state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
             return reads
         for reading in readings:
@@ -381,12 +406,17 @@ class Fhem:
         return reads
 
     def getFhemState(self, timeout=0.1):
+        if loglevel > 0:
+            print("Deprecation: use get_fhem_state instead of getFhemState")
+            self.get_fhem_state(timeout)
+
+    def get_fhem_state(self, timeout=0.1):
         '''Get FHEM state of all devices, returns a large JSON object with
         every single FHEM device and reading state
         :param timeout: timeout for reply'''
         if self.connection or self.protocol != 'telnet':
-            return self.sendRcvCmd("jsonlist2", blocking=False,
-                                   timeout=timeout)
+            return self.send_recv_cmd("jsonlist2", blocking=False,
+                                      timeout=timeout)
         else:
             if self.loglevel > 0:
                 print("E - Failed to get fhem state - not connected.")
@@ -429,15 +459,15 @@ class FhemEventQueue:
         self.fhem = Fhem(server=server, port=port, ssl=ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
-        self.EventThread = threading.Thread(target=self._EventWorkerThread,
+        self.EventThread = threading.Thread(target=self._event_worker_thread,
                                             args=(que, filterlist,
                                                   timeout, eventtimeout))
         self.EventThread.setDaemon(True)
         self.EventThread.start()
 
-    def _EventWorkerThread(self, que, filterlist, timeout=0.1,
-                           eventtimeout=120):
-        self.fhem.sendCmd(self.informcmd)
+    def _event_worker_thread(self, que, filterlist, timeout=0.1,
+                             eventtimeout=120):
+        self.fhem.send_cmd(self.informcmd)
         data = ""
         lastreceive = time.time()
         eventThreadActive = True
@@ -451,11 +481,11 @@ class FhemEventQueue:
             if time.time() - lastreceive > eventtimeout:
                 if self.loglevel > 2:
                     print("D - Event-timeout, refreshing INFORM TIMER")
-                self.fhem.sendCmd(self.informcmd)
+                self.fhem.send_cmd(self.informcmd)
                 if self.fhem.connected() is True:
                     lastreceive = time.time()
             if self.fhem.connected() is True:
-                data = self.fhem._recvNonblocking(timeout)
+                data = self.fhem._recv_nonblocking(timeout)
                 lines = data.decode('utf-8').split('\n')
                 for l in lines:
                     if len(l) > 0:
