@@ -28,9 +28,9 @@ import fhem
 
 fh = fhem.Fhem("myserver.home.org")
 # Send a command to FHEM (this automatically connects() in case of telnet)
-fh.sendCmd("set lamp on")
+fh.send_cmd("set lamp on")
 # Get a specific reading from a device
-temp = fh.getDevReading("LivingThermometer", "temperature")
+temp = fh.get_dev_reading("LivingThermometer", "temperature")
 ```
 To connect via with SSL and password:
 ```
@@ -93,24 +93,24 @@ Telnet: create socket connection to server, only used for telnet connections
 ### connected(self)
 Telnet: Returns True if socket is connected to server.
 
-### getDevReading(dev, reading, timeout=0.1)
+### get_dev_reading(dev, reading, timeout=0.1)
 Get a specific reading from a FHEM device
 * dev: FHEM device
 * reading: name of FHEM reading
 * timeout: timeout for reply
 
-### getDevReadings(dev, readings, timeout=0.1)
+### get_dev_readings(dev, readings, timeout=0.1)
 Get a list of readings for one FHEM device
 * dev: FHEM device
 * readings: array of FHEM reading names
 * timeout: timeout for reply
 
-### getDevState(dev, timeout=0.1)
+### get_dev_state(dev, timeout=0.1)
 Get all FHEM device properties as JSON object
 * dev: FHEM device name
 * timeout: timeout for reply
 
-### getFhemState(timeout=0.1)
+### get_fhem_state(timeout=0.1)
 Get FHEM state of all devices, returns a large JSON object with
 every single FHEM device and reading state
 * timeout: timeout for reply
@@ -123,11 +123,11 @@ Set logging level,
 Sends a buffer to server
 * buf: binary buffer
 
-### sendCmd(msg)
+### send_cmd(msg)
 Sends a command to server, NL is appended.
 * msg: string with FHEM command, e.g. ```'set lamp on'```
 
-### sendRcvCmd(msg, timeout=0.1, blocking=True)
+### send_recv_cmd(msg, timeout=0.1, blocking=True)
 Sends a command to the server and waits for an immediate reply.
 * msg: FHEM command (NL is appended)
 * timeout: waiting time for reply
