@@ -1,10 +1,11 @@
 # python-fhem
 Python FHEM (home automation server) API
 
-Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password
-or basicAuth support.
+Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
+
 ## Installation:
 ### PIP installation (PyPI):
+See the [PyPI page](https://pypi.python.org/pypi?:action=display&name=fhem) for additional information about the package.
 ```
 pip install [-U] fhem
 ```
