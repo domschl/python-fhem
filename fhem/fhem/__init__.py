@@ -29,7 +29,7 @@ except ImportError:
 
     
 '''API for FHEM homeautomation server'''
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 
 
 class Fhem:
@@ -335,23 +335,19 @@ class Fhem:
             self.connect()
         if self.protocol == 'telnet':
             if self.connection:
-                if self.send_cmd(msg):
-                    time.sleep(timeout)
-                    data = []
-                    if blocking is True:
-                        try:
-                            data = self.sock.recv(32000)
-                        except socket.error:
-                            if self.loglevel > 0:
-                                print("E - Failed to recv msg.", data)
-                            return {}
-                    else:
-                        data = self._recv_nonblocking(timeout)
-                    self.sock.setblocking(True)
+                self.send_cmd(msg)
+                time.sleep(timeout)
+                data = []
+                if blocking is True:
+                    try:
+                        data = self.sock.recv(32000)
+                    except socket.error:
+                        if self.loglevel > 0:
+                            print("E - Failed to recv msg.", data)
+                        return {}
                 else:
-                    if self.loglevel > 0:
-                        print("E - Failed to send msg, len=", len(msg),
-                              "send_cmd failed.")
+                    data = self._recv_nonblocking(timeout)
+                self.sock.setblocking(True)
             else:
                 if self.loglevel > 0:
                     print("E - Failed to send msg, len=", len(msg),
