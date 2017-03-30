@@ -7,6 +7,7 @@ import threading
 try:
     # Python 3.x
     from urllib.parse import quote
+    from urllib.parse import urlencode
     from urllib.request import urlopen
     from urllib.error import URLError
     from urllib.request import HTTPSHandler
@@ -17,6 +18,7 @@ try:
 except ImportError:
     # Python 2.x
     from urllib2 import quote
+    from urllib import urlencode
     from urllib2 import urlopen
     from urllib2 import URLError
     from urllib2 import HTTPSHandler
@@ -26,14 +28,14 @@ except ImportError:
     from urllib2 import install_opener
 
 '''API for FHEM homeautomation server'''
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 
 
 class Fhem:
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
     def __init__(self, server, port=7072,
-                 ssl=False, protocol="telnet", username="", password="",
+                 ssl=False, protocol="telnet", username="", password="", csrf=True,
                  cafile="", loglevel=1):
         '''Instantiate connector object.
         :param server: address of FHEM server
@@ -44,12 +46,15 @@ class Fhem:
         left empty, https protocol will ignore certificate checks.
         :param username: username for http(s) basicAuth validation
         :param password: (global) telnet or http(s) password
+        :param csrf: (http(s)) use csrf token
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
         validprots = ['http', 'https', 'telnet']
         self.server = server
         self.port = port
         self.ssl = ssl
+        self.csrf = csrf
+        self.csrftoken = ''
         self.username = username
         self.password = password
         self.loglevel = loglevel
@@ -64,10 +69,12 @@ class Fhem:
         if (protocol == "https") or (ssl is True):
             self.ssl = True
             self.baseurlauth = "https://"+server+":"+str(port)+"/"
+            self.baseurltoken = self.baseurlauth + "fhem"
             self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
         else:
             if protocol == "http":
                 self.baseurlauth = "http://"+server+":"+str(port)+"/"
+                self.baseurltoken = self.baseurlauth + "fhem"
                 self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
         if protocol == "https" or protocol == "http":
             self._install_opener()
@@ -125,13 +132,25 @@ class Fhem:
                     return
                 if self.loglevel > 1:
                     print("I - Auth password sent to", self.server)
-
-    def connected(self):
-        '''Returns True if socket is connected to server. (telnet only)'''
-        if self.protocol == 'telnet':
-            return self.connection
         else:
-            return True
+            if self.csrf:
+                ans=self.send("");
+                print(">",ans)
+                dans=ans.read()
+                st=dans.find("csrf_")
+                if st != -1:
+                    token=dans[st:]
+                    token=token[:token.find("'")]
+                    self.csrftoken=token
+                    self.connection=True
+                else:
+                    print("E - CSRF token requested for server that doesn't know CSRF")
+            else:
+                self.connection=True
+                
+    def connected(self):
+        '''Returns True if socket/http(s) session is connected to server.'''
+        return self.connection
 
     def logging(self, level):
         '''Set logging level,
@@ -210,19 +229,32 @@ class Fhem:
                           "not connected.")
                 return False
         else:  # HTTP(S)
+            paramdata=None
+            if self.csrf and len(buf)>0:
+                # token='csrf_232332336901974'
+                # print("Token: ",token)
+                if len(self.csrftoken)==0:
+                    print("E - csrf token not available!")
+                    self.connection=False
+                datas={'fwcsrf': self.csrftoken}
+                paramdata=urlencode(datas).encode('UTF-8')
+                # print("data: ", paramdata)
             try:
                 if self.loglevel > 2:
                     print("D - Cmd:", buf)
-                # cmd = urllib.parse.quote(buf)
                 cmd = quote(buf)
                 if self.loglevel > 2:
                     print("D - Cmd-enc:", cmd)
-                ccmd = self.baseurl + cmd
+                if len(cmd)>0:
+                    ccmd = self.baseurl + cmd
+                else:
+                    ccmd = self.baseurltoken
                 if self.loglevel > 1:
                     print("I - request: ", ccmd)
-                ans = urlopen(ccmd)
+                ans = urlopen(ccmd, paramdata) # , data, 10)  # XXX timeout
                 return ans
             except URLError as e:
+                self.connection=False
                 if self.loglevel > 0:
                     print("E - Failed to send msg, len=", len(buf), e)
                 return False
@@ -236,11 +268,11 @@ class Fhem:
         '''Sends a command to server.
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
+        if not self.connected():
+            self.connect()
         if self.loglevel > 2 and self.nolog is not True:
             print("D - Sending: ", msg)
         if self.protocol == 'telnet':
-            if not self.connected():
-                self.connect()
             if self.connection:
                 msg = msg + "\n"
                 cmd = msg.encode('utf-8')
