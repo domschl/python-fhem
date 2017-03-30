@@ -21,6 +21,11 @@ or, as developer installation, allowing inplace editing:
 pip install [-U] -e .
 ```
 
+
+## History
+0.4.0: csrf token support (FHEM 5.8 requirement)
+
+
 ## Usage:
 ### Set and get transactions
 
@@ -71,27 +76,29 @@ while True:
 
 # Documentation
 ## class Fhem()
-Connects to FHEM via socket communication with optional SSL and password support
+Connects to FHEM via socket/https(s) communication with optional SSL and password support
 
 ### Fhem(server, port=7072, ssl=False, username='', password='', cafile='', loglevel=1)
 Instantiate connector object, socket is not opened, use connect() to
 actually open the socket.
 * server: address of FHEM server
-* port: telnet port of server
-* ssl: boolean for SSL (TLS)
-* username: for http(s) basicAuth
-* password: (global) telnet or http(s) basicAuth password
-* cafile: path to a certificate authority PEM file, if ommitted server
-SLL certificate is not checked.
+* param port: telnet/http(s) port of server
+* protocol: 'telnet', 'http' or 'https'
+* ssl: boolean for SSL (TLS) [https as protocol sets ssl=True]
+* cafile: path to public certificate of your root authority, if
+  left empty, https protocol will ignore certificate checks.
+* username: username for http(s) basicAuth validation
+* password: (global) telnet or http(s) password
+* csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True
 * loglevel: 0: no log, 1: errors, 2: info, 3: debug
 
 ### close()
 Closes socket connection.
 
 ### connect()
-Telnet: create socket connection to server, only used for telnet connections
+create connection to server
 
-### connected(self)
+### connected()
 Telnet: Returns True if socket is connected to server.
 
 ### get_dev_reading(dev, reading, timeout=0.1)
@@ -158,3 +165,4 @@ The filterlist works on client side.
 
 ### close()
 Stop event thread and close socket. Note: The thread is stopped asynchronously upon completion of current activity.
+
