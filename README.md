@@ -29,16 +29,18 @@ pip install [-U] -e .
 ## Usage:
 ### Set and get transactions
 
+Default telnet connection without password und without encryption:
 ```
 import fhem
 
+# Connect via default protocol telnet, default port 7072:
 fh = fhem.Fhem("myserver.home.org")
 # Send a command to FHEM (this automatically connects() in case of telnet)
 fh.send_cmd("set lamp on")
 # Get a specific reading from a device
 temp = fh.get_dev_reading("LivingThermometer", "temperature")
 ```
-To connect via with SSL and password:
+To connect via telnet with SSL and password:
 ```
 fh = fhem.Fhem("myserver.home.org", port=7073, ssl=True, password='mysecret')
 fh.connect()
@@ -78,7 +80,7 @@ while True:
 ## class Fhem()
 Connects to FHEM via socket/https(s) communication with optional SSL and password support
 
-### Fhem(server, port=7072, ssl=False, username='', password='', cafile='', loglevel=1)
+### Fhem(server, protocol='telnet', port=7072, ssl=False, username='', password='', cafile='', loglevel=1)
 Instantiate connector object, socket is not opened, use connect() to
 actually open the socket.
 * server: address of FHEM server
