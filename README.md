@@ -29,7 +29,7 @@ pip install [-U] -e .
 ## Usage:
 ### Set and get transactions
 
-Default telnet connection without password und without encryption:
+Default telnet connection without password and without encryption:
 ```
 import fhem
 
