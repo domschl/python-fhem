@@ -24,6 +24,7 @@ pip install [-U] -e .
 
 ## History
 0.4.0: csrf token support (FHEM 5.8 requirement)
+0.4.2: deprecation error message fixed (Ivermue, #4)
 
 
 ## Usage:
