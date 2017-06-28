@@ -265,7 +265,7 @@ class Fhem:
 
     def sendCmd(self, msg):
         if self.loglevel > 0:
-            print("Deprecation: please use self_cmd instead of selfCmd")
+            print("Deprecation: please use send_cmd instead of sendCmd")
         return self.send_cmd(msg)
 
     def send_cmd(self, msg):
