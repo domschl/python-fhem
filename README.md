@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/fhem.svg)](https://badge.fury.io/py/fhem)
 # python-fhem
 Python FHEM (home automation server) API
 
