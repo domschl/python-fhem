@@ -4,6 +4,7 @@ import json
 import socket
 import ssl
 import threading
+import logging
 try:
     # Python 3.x
     from urllib.parse import quote
@@ -27,12 +28,17 @@ except ImportError:
     from urllib2 import build_opener
     from urllib2 import install_opener
 
-    
+
 '''API for FHEM homeautomation server'''
-__version__ = '0.4.1'
+__version__ = '0.4.2'
+
+# create logger with 'python_fhem' and set default level to Error
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 class Fhem:
+
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
     def __init__(self, server, port=7072,
@@ -48,7 +54,7 @@ class Fhem:
         :param username: username for http(s) basicAuth validation
         :param password: (global) telnet or http(s) password
         :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True
-        :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
+        :param loglevel: 0: critical, 1: errors, 2: info, 3: debug
         '''
         validprots = ['http', 'https', 'telnet']
         self.server = server
@@ -65,77 +71,74 @@ class Fhem:
         self.bsock = None
         self.sock = None
         self.httpsHandler = None
+
+        # Set LogLevel
+        set_loglevel(loglevel)
+
+        # Check if protocol is supported
         if protocol in validprots:
             self.protocol = protocol
         else:
-            if loglevel > 0:
-                print("E - Invalid protocol: ", protocol)
-        if (protocol == "https") or (ssl is True):
-            self.ssl = True
-            self.baseurlauth = "https://"+server+":"+str(port)+"/"
-            self.baseurltoken = self.baseurlauth + "fhem"
-            self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
-        else:
-            if protocol == "http":
-                self.baseurlauth = "http://"+server+":"+str(port)+"/"
-                self.baseurltoken = self.baseurlauth + "fhem"
-                self.baseurl = self.baseurlauth + "fhem?XHR=1&cmd="
-        if protocol == "https" or protocol == "http":
+            logger.error("Invalid protocol: {}".format(protocol))
+
+        # Set authenticication values if#
+        # the protocol is http(s) or ssl is True
+        if protocol != "telnet":
+            tmp_protocol = "http"
+            if (protocol == "https") or (ssl is True):
+                self.ssl = True
+                tmp_protocol = "https"
+
+            self.baseurlauth = "{}://{}:{}/".format(tmp_protocol, server, port)
+            self.baseurltoken = "{}fhem".format(self.baseurlauth)
+            self.baseurl = "{}fhem?XHR=1&cmd=".format(self.baseurlauth)
+
             self._install_opener()
 
+
     def connect(self):
+        '''create socket connection to server (telnet protocol only)'''
         if self.protocol == 'telnet':
-            '''create socket connection to server (telnet protocol only)'''
             try:
-                if self.loglevel > 2:
-                    print("D - creating socket...")
+                logger.debug("Creating socket...")
                 if self.ssl:
                     self.bsock = socket.socket(socket.AF_INET,
                                                socket.SOCK_STREAM)
                     self.sock = ssl.wrap_socket(self.bsock)
-                    self.sock.connect((self.server, self.port))
-                    if self.loglevel > 1:
-                        print("I - Connecting to", self.server, "on port:",
-                              self.port, " with SSL (TLS)")
+                    logger.info("Connecting to {}:{} with SSL (TLS)".format(self.server, self.port))
                 else:
                     self.sock = socket.socket(socket.AF_INET,
                                               socket.SOCK_STREAM)
-                    self.sock.connect((self.server, self.port))
-                    if self.loglevel > 1:
-                        print("I - Connecting to", self.server, "on port:",
-                              self.port, " no SSL")
+                    logger.info("Connecting to {}:{} without SSL".format(self.server, self.port))
+
+                self.sock.connect((self.server, self.port))
                 self.connection = True
-                if self.loglevel > 1:
-                    print("I - Connected to", self.server, "on port:",
-                          self.port)
+                logger.info("Connected to {}:{}".format(self.server, self.port))
             except socket.error:
                 self.connection = False
-                if self.loglevel > 0:
-                    print("E - Failed to connected to", self.server,
-                          "on port:", self.port)
+                logger.error("Failed to connect to {}:{}".format(self.server, self.port))
                 return
+
             if self.password != "":
                 # time.sleep(1.0)
                 # self.send_cmd("\n")
                 # prmpt = self._recv_nonblocking(4.0)
                 prmpt = self.sock.recv(32000)
-                if self.loglevel > 2:
-                    print("auth-prompt:", prmpt)
+                logger.debug("auth-prompt: {}".format(prmpt))
+
                 self.nolog = True
                 self.send_cmd(self.password)
                 self.nolog = False
                 time.sleep(0.1)
+
                 try:
                     po1 = self.sock.recv(32000)
-                    if self.loglevel > 2:
-                        print("auth-repl1:", po1)
+                    logger.debug("auth-repl1: {}".format(po1))
                 except socket.error:
-                    if self.loglevel > 0:
-                        print("E - Failed to recv auth reply.")
+                    logger.error("Failed to recv auth reply")
                     self.connection = False
                     return
-                if self.loglevel > 1:
-                    print("I - Auth password sent to", self.server)
+                logger.info("Auth password sent to {}".format(self.server))
         else:  # http(s)
             if self.csrf:
                 dat = self.send("").decode("UTF-8")
@@ -146,19 +149,29 @@ class Fhem:
                     self.csrftoken = token
                     self.connection = True
                 else:
-                    print("E - CSRF token requested for server that doesn't know CSRF")
+                    logger.error("CSRF token requested for server that doesn't know CSRF")
             else:
                 self.connection = True
+
 
     def connected(self):
         '''Returns True if socket/http(s) session is connected to server.'''
         return self.connection
 
-    def logging(self, level):
+
+    def set_loglevel(self, level):
         '''Set logging level,
-        :param level: 0: no log, 1: errors, 2: info, 3: debug
+        :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
-        self.loglevel = level
+        if level == 0:
+            logger.setLevel(logging.CRITICAL)
+        elif level == 1:
+            logger.setLevel(logging.ERROR)
+        elif level == 2:
+            logger.setLevel(logging.INFO)
+        elif level == 3:
+            logger.setLevel(logging.DEBUG)
+
 
     def close(self):
         '''Closes socket connection. (telnet only)'''
@@ -167,13 +180,12 @@ class Fhem:
                 time.sleep(0.2)
                 self.sock.close()
                 self.connection = False
-                if self.loglevel > 1:
-                    print("I - Disconnected from fhemserver")
+                logger.info("Disconnected from fhem-server")
             else:
-                if self.loglevel > 0:
-                    print("E - Cannot disconnect, not connected.")
+                logger.error("Cannot disconnect, not connected")
         else:
             self.connection = False
+
 
     def _install_opener(self):
         self.opener = None
@@ -201,72 +213,65 @@ class Fhem:
             if self.username != "":
                 self.opener = build_opener(self.auth_handler)
         if self.opener is not None:
-            if self.loglevel > 2:
-                print("D - Setting up opener on: ", self.baseurlauth)
+            logger.debug("Setting up opener on: {}".format(self.baseurlauth))
             install_opener(self.opener)
+
 
     def send(self, buf):
         '''Sends a buffer to server
         :param buf: binary buffer'''
         if len(buf)>0:
             if not self.connected():
-                if self.loglevel > 2:
-                    print("D - Not connected, trying to connect...")
+                logger.debug("Not connected, trying to connect...")
                 self.connect()
         if self.protocol == 'telnet':
             if self.connected():
-                if self.loglevel > 2:
-                    print("D - Connected, sending...")
+                logger.debug("Connected, sending...")
                 try:
                     self.sock.sendall(buf)
-                    if self.loglevel > 1:
-                        print("I - Sent msg, len=", len(buf))
+                    logger.info("Sent msg, len={}".format(len(buf)))
                     return None
                 except OSError as e:
-                    if self.loglevel > 0:
-                        print("E - Failed to send msg, len=", len(buf),
-                              "exception raised: ", e)
+                    logger.error("Failed to send msg, len={}. Exception raised: {}".format(len(buf), e))
                     self.connection = None
                     return None
             else:
-                if self.loglevel > 0:
-                    print("E - Failed to send msg, len=", len(buf),
-                          "not connected.")
+                logger.error("Failed to send msg, len={}. Not connected.".format(len(buf)))
                 return None
         else:  # HTTP(S)
             paramdata = None
             if self.csrf and len(buf) > 0:
                 if len(self.csrftoken) == 0:
-                    print("E - csrf token not available!")
+                    logger.error("CSRF token not available!")
                     self.connection = False
                 else:
                     datas = {'fwcsrf': self.csrftoken}
                     paramdata = urlencode(datas).encode('UTF-8')
+
             try:
-                if self.loglevel > 2:
-                    print("D - Cmd:", buf)
+                logger.debug("Cmd: {}".format(buf))
                 cmd = quote(buf)
-                if self.loglevel > 2:
-                    print("D - Cmd-enc:", cmd)
+                logger.debug("Cmd-enc: {}".format(cmd))
+
                 if len(cmd) > 0:
                     ccmd = self.baseurl + cmd
                 else:
                     ccmd = self.baseurltoken
-                if self.loglevel > 1:
-                    print("I - request: ", ccmd)
+
+                logger.info("Request: {}".format(ccmd))
                 ans = urlopen(ccmd, paramdata) # , data, 10)  # XXX timeout
                 data = ans.read()
                 return data
             except URLError as e:
                 self.connection=False
-                if self.loglevel > 0:
-                    print("E - Failed to send msg, len=", len(buf), e)
+                logger.error("Failed to send msg, len={}".format(len(buf)))
                 return None
 
+
     def sendCmd(self, msg):
-        if self.loglevel > 0:
-            print("Deprecation: please use send_cmd instead of sendCmd")
+        logger.critical("Deprecation: please use send_cmd instead of sendCmd")
         return self.send_cmd(msg)
+
 
     def send_cmd(self, msg):
         '''Sends a command to server.
@@ -274,20 +279,19 @@ class Fhem:
         '''
         if not self.connected():
             self.connect()
-        if self.loglevel > 2 and self.nolog is not True:
-            print("D - Sending: ", msg)
+        if not self.nolog:
+            logger.debug("Sending: ".format(msg))
         if self.protocol == 'telnet':
             if self.connection:
-                msg = msg + "\n"
+                msg = "{}\n".format(msg)
                 cmd = msg.encode('utf-8')
                 return self.send(cmd)
             else:
-                if self.loglevel > 0:
-                    print("E - Failed to send msg, len=", len(msg),
-                          "not connected.")
+                logger.error("Failed to send msg, len={}. Not connected.".format(len(buf)))
                 return None
         else:
             return self.send(msg)
+
 
     def _recv_nonblocking(self, timeout=0.1):
         if not self.connected():
@@ -298,14 +302,15 @@ class Fhem:
             data = b''
             try:
                 data = self.sock.recv(32000)
-            except socket.error:
-                if self.loglevel > 3:
-                    print("D - exception in non-blocking")
-                    time.sleep(timeout)
+            except socket.error as e:
+                logger.debug("Exception in non-blocking. Error: {}".format(e))
+                time.sleep(timeout)
+
             wok = 1
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
                 datai = b''
+
                 try:
                     datai = self.sock.recv(32000)
                     if len(datai) == 0:
@@ -314,15 +319,15 @@ class Fhem:
                         data += datai
                 except socket.error:
                     wok = 0
-                    if self.loglevel > 3:
-                        print("D - exception in non-blocking")
+                    logger.debug("Exception in non-blocking. Error: {}".format(e))
             self.sock.setblocking(True)
         return data
 
+
     def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
-        if self.loglevel > 0:
-            print("Deprecation: use send_recv_cmd instead of sendRcvCmd")
-            self.send_recv_cmd(msg, timeout, blocking)
+        logger.critical("Deprecation: use send_recv_cmd instead of sendRcvCmd")
+        self.send_recv_cmd(msg, timeout, blocking)
+
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
         '''Sends a command to the server and waits for an immediate reply.
@@ -342,43 +347,40 @@ class Fhem:
                     try:
                         data = self.sock.recv(32000)
                     except socket.error:
-                        if self.loglevel > 0:
-                            print("E - Failed to recv msg.", data)
+                        logger.error("Failed to recv msg. {}".format(data))
                         return {}
                 else:
                     data = self._recv_nonblocking(timeout)
+
                 self.sock.setblocking(True)
             else:
-                if self.loglevel > 0:
-                    print("E - Failed to send msg, len=", len(msg),
-                          "not connected.")
+                logger.error("Failed to send msg, len={}. Not connected.".format(len(msg)))
         else:
             data = self.send_cmd(msg)
             if data is None:
                 return None
+
         if len(data) == 0:
             return {}
+
         try:
             sdata = data.decode('utf-8')
             jdata = json.loads(sdata)
         except:
-            if self.loglevel > 0:
-                print("E - Failed to decode json, exception raised.",
-                      data)
+            logger.error("Failed to decode json, exception raised. {}".format(data))
             return {}
         if len(jdata[u'Results']) == 0:
-            if self.loglevel > 0:
-                print("E - Query had no result.")
+            logger.error("Query had no result.")
             return {}
         else:
-            if self.loglevel > 1:
-                print("I - JSON answer received.")
+            logger.info("JSON answer received.")
             return jdata
 
+
     def getDevState(self, dev, timeout=0.1):
-        if self.loglevel > 0:
-            print("Deprecation: use get_dev_state insteadd of getDevState")
-            self.get_dev_state(dev, timeout)
+        logger.critical("Deprecation: use get_dev_state insteadd of getDevState")
+        self.get_dev_state(dev, timeout)
+
 
     def get_dev_state(self, dev, timeout=0.1):
         '''Get all FHEM device properties as JSON object
@@ -386,18 +388,18 @@ class Fhem:
         :param timeout: timeout for reply'''
         if not self.connected():
             self.connect()
+
         if self.connected():
-            return self.send_recv_cmd("jsonlist2 " + dev, timeout=timeout)
+            return self.send_recv_cmd("jsonlist2 {}".format(dev), timeout=timeout)
         else:
-            if self.loglevel > 0:
-                print("E - Failed to get dev state for", dev,
-                      "- not connected.")
+            logger.error("Failed to get dev state for {}. Not connected.".format(dev))
             return {}
 
+
     def getDevReading(self, dev, reading, timeout=0.1):
-        if self.loglevel > 0:
-            print("Deprecation: use get_dev_reading instead of getDevReading")
-            self.get_dev_reading(dev, reading, timeout)
+        logger.critical("Deprecation: use get_dev_reading instead of getDevReading")
+        self.get_dev_reading(dev, reading, timeout)
+
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
         '''Get a specific reading from a FHEM device
@@ -408,18 +410,19 @@ class Fhem:
         state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
             return None
+
         try:
             read = state['Results'][0]['Readings'][reading]['Value']
         except:
-            if self.loglevel > 0:
-                print("E - Reading not defined:", dev, reading)
+            logger.error("Reading not defined: {}, {}".format(dev, reading))
             return read
         return read
 
+
     def getDevReadings(self, dev, reading, timeout=0.1):
-        if self.loglevel > 0:
-            print("Deprecation: use get_dev_reading instead of getDevReading")
-            self.get_dev_readings(dev, reading, timeout)
+        logger.critical("Deprecation: use get_dev_readings instead of getDevReadings")
+        self.get_dev_readings(dev, reading, timeout)
+
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
         '''Get a list of readings for one FHEM device
@@ -435,14 +438,14 @@ class Fhem:
                 rr1 = state['Results'][0]
                 reads[reading] = rr1['Readings'][reading]['Value']
             except:
-                if self.loglevel > 0:
-                    print("E - Reading not defined:", dev, reading)
+                logger.error("Reading not defined: {}, {}".format(dev, reading))
         return reads
 
+
     def getFhemState(self, timeout=0.1):
-        if self.loglevel > 0:
-            print("Deprecation: use get_fhem_state instead of getFhemState")
-            self.get_fhem_state(timeout)
+        logger.critical("Deprecation: use get_fhem_state instead of getFhemState")
+        self.get_fhem_state(timeout)
+
 
     def get_fhem_state(self, timeout=0.1):
         '''Get FHEM state of all devices, returns a large JSON object with
@@ -454,8 +457,7 @@ class Fhem:
             return self.send_recv_cmd("jsonlist2", blocking=False,
                                       timeout=timeout)
         else:
-            if self.loglevel > 0:
-                print("E - Failed to get fhem state - not connected.")
+            logger.error("Failed to get fhem state. Not connected.")
             return {}
 
 
@@ -486,12 +488,12 @@ class FhemEventQueue:
         side.
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
-        self.loglevel = loglevel
+        self.set_loglevel(loglevel)
         self.informcmd = "inform timer"
         if serverregex is not None:
             self.informcmd += " " + serverregex
         if protocol != 'telnet':
-            print("E - ONLY TELNET is currently supported for EventQueue")
+            logger.error("ONLY TELNET is currently supported for EventQueue")
             return
         self.fhem = Fhem(server=server, port=port, ssl=ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
@@ -501,6 +503,21 @@ class FhemEventQueue:
                                                   timeout, eventtimeout))
         self.EventThread.setDaemon(True)
         self.EventThread.start()
+
+
+    def set_loglevel(self, level):
+        '''Set logging level,
+        :param level: 0: critical, 1: errors, 2: info, 3: debug
+        '''
+        if level == 0:
+            logger.setLevel(logging.CRITICAL)
+        elif level == 1:
+            logger.setLevel(logging.ERROR)
+        elif level == 2:
+            logger.setLevel(logging.INFO)
+        elif level == 3:
+            logger.setLevel(logging.DEBUG)
+
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
                              eventtimeout=120):
@@ -515,12 +532,13 @@ class FhemEventQueue:
                     lastreceive = time.time()
                 else:
                     time.sleep(5.0)
+
             if time.time() - lastreceive > eventtimeout:
-                if self.loglevel > 2:
-                    print("D - Event-timeout, refreshing INFORM TIMER")
+                logger.debug("Event-timeout, refreshing INFORM TIMER")
                 self.fhem.send_cmd(self.informcmd)
                 if self.fhem.connected() is True:
                     lastreceive = time.time()
+
             if self.fhem.connected() is True:
                 data = self.fhem._recv_nonblocking(timeout)
                 lines = data.decode('utf-8').split('\n')
@@ -557,6 +575,7 @@ class FhemEventQueue:
                                         val = vl[0]
                                     if len(vl) > 1:
                                         unit = vl[1]
+
                                 adQ = True
                                 if filterlist is not None:
                                     adQ = False
@@ -587,6 +606,7 @@ class FhemEventQueue:
             time.sleep(timeout)
         self.fhem.close()
         return
+
 
     def close(self):
         '''Stop event thread and close socket.'''
