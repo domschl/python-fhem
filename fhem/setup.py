@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='fhem',
-      version='0.4.2',
+      version='0.4.3',
       description='Python API for FHEM home automation server',
       long_description='Uses socket or http(s) communication to set and get states from FHEM home automation server with optional SSL encryption and password support',
       classifiers=[
