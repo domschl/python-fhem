@@ -440,7 +440,7 @@ class Fhem:
         return reads
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
-        '''Get the date and time of a specific reading from a FHEM device
+        '''Get the datetime of a specific reading from a FHEM device
         :param dev: FHEM device
         :param reading: name of FHEM reading
         :param timeout: timeout for reply'''
@@ -463,9 +463,9 @@ class Fhem:
         return time
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
-        '''Get a list of dates and times of readings for one FHEM device
+        '''Get a list of datetimes of readings for one FHEM device
         :param dev: FHEM device
-        'param readings': array of FHEM reading names
+        :param readings: array of FHEM reading names
         :param timeout: timeout for reply'''
         reads = {}
         state = self.get_dev_state(dev, timeout=timeout)

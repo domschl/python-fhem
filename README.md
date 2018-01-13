@@ -118,6 +118,18 @@ Get a list of readings for one FHEM device
 * readings: array of FHEM reading names
 * timeout: timeout for reply
 
+### get_dev_reading_time(dev, reading, timeout=0.1)
+Get datetime of last change of a reading from a FHEM device
+* dev: FHEM device
+* reading: name of FHEM reading
+* timeout: timeout for reply
+
+### get_dev_readings_time(dev, readings, timeout=0.1)
+Get a list of datetimes of last change of readings for one FHEM device
+* dev: FHEM device
+* readings: array of FHEM reading names
+* timeout: timeout for reply
+
 ### get_dev_state(dev, timeout=0.1)
 Get all FHEM device properties as JSON object
 * dev: FHEM device name
