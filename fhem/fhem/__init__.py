@@ -30,7 +30,7 @@ except ImportError:
 
 
 '''API for FHEM homeautomation server'''
-__version__ = '0.4.2'
+__version__ = '0.4.4'   # needs to be in sync with setup.py and PKG-INFO
 
 # create logger with 'python_fhem' and set default level to Error
 logging.basicConfig(level=logging.ERROR)
@@ -453,12 +453,12 @@ class Fhem:
         try:
             read = state['Results'][0]['Readings'][reading]['Time']
         except:
-            logger.error("Reading not defined:", dev, reading)
+            logger.error("Reading not defined: {} {}".format(dev, reading))
             return None
         try:
             time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
-        except ValueError as err:
-            logger.error("Invalid time format: {}", err)
+        except (ValueError, TypeError) as err:
+            logger.error("Invalid time format: {}".format(err))
             return None
         return time
 
@@ -478,10 +478,10 @@ class Fhem:
                 try:
                     time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
                     reads[reading] = time 
-                except ValueError as err:
+                except (ValueError, TypeError) as err:
                     logger.error("Invalid time format: {}", err)
             except:
-                logger.error("Reading not defined:", dev, reading)
+                logger.error("Reading not defined: {} {}".format(dev, reading))
         return reads
 
     def getFhemState(self, timeout=0.1):
