@@ -453,14 +453,12 @@ class Fhem:
         try:
             read = state['Results'][0]['Readings'][reading]['Time']
         except:
-            if self.loglevel > 0:
-                print("E - Reading not defined:", dev, reading)
+            logger.error("Reading not defined:", dev, reading)
             return None
         try:
             time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
         except ValueError as err:
-            if self.loglevel > 0:
-                print("E - Invalid time format: {}", err)
+            logger.error("Invalid time format: {}", err)
             return None
         return time
 
@@ -481,11 +479,9 @@ class Fhem:
                     time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
                     reads[reading] = time 
                 except ValueError as err:
-                    if self.loglevel > 0:
-                        print("E - Invalid time format: {}", err)
+                    logger.error("Invalid time format: {}", err)
             except:
-                if self.loglevel > 0:
-                    print("E - Reading not defined:", dev, reading)
+                logger.error("Reading not defined:", dev, reading)
         return reads
 
     def getFhemState(self, timeout=0.1):
