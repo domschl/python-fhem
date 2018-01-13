@@ -280,14 +280,14 @@ class Fhem:
         if not self.connected():
             self.connect()
         if not self.nolog:
-            logger.debug("Sending: ".format(msg))
+            logger.debug("Sending: {}".format(msg))
         if self.protocol == 'telnet':
             if self.connection:
                 msg = "{}\n".format(msg)
                 cmd = msg.encode('utf-8')
                 return self.send(cmd)
             else:
-                logger.error("Failed to send msg, len={}. Not connected.".format(len(buf)))
+                logger.error("Failed to send msg, len={}. Not connected.".format(len(msg)))
                 return None
         else:
             return self.send(msg)
@@ -441,6 +441,7 @@ class Fhem:
                 logger.error("Reading not defined: {}, {}".format(dev, reading))
         return reads
 
+
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         '''Get the datetime of a specific reading from a FHEM device
         :param dev: FHEM device
@@ -461,6 +462,7 @@ class Fhem:
             logger.error("Invalid time format: {}".format(err))
             return None
         return time
+
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
         '''Get a list of datetimes of readings for one FHEM device
@@ -483,6 +485,7 @@ class Fhem:
             except:
                 logger.error("Reading not defined: {} {}".format(dev, reading))
         return reads
+
 
     def getFhemState(self, timeout=0.1):
         logger.critical("Deprecation: use get_fhem_state instead of getFhemState")
