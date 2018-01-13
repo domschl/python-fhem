@@ -25,6 +25,10 @@ pip install [-U] -e .
 
 
 ## History
+0.5: API cleanup
+sendCmd, sendRcvCmd, getDevState, getDevReading
+ssl= -> use_ssl=
+
 0.4.4: Merged python logger support (ChuckMoe, [#6](https://github.com/domschl/python-fhem/commit/25843d79986031cd654f87781f37d1266d0b116b))
 
 0.4.3: Merged API extensions for getting time of last reading change (logi85, [#5](https://github.com/domschl/python-fhem/commit/11719b41b29a8c2c6192210e3848d9d8aedc5337))
@@ -50,7 +54,7 @@ temp = fh.get_dev_reading("LivingThermometer", "temperature")
 ```
 To connect via telnet with SSL and password:
 ```
-fh = fhem.Fhem("myserver.home.org", port=7073, ssl=True, password='mysecret')
+fh = fhem.Fhem("myserver.home.org", port=7073, use_ssl=True, password='mysecret')
 fh.connect()
 if fh.connected():
     # Do things
@@ -88,13 +92,13 @@ while True:
 ## class Fhem()
 Connects to FHEM via socket/https(s) communication with optional SSL and password support
 
-### Fhem(server, protocol='telnet', port=7072, ssl=False, username='', password='', cafile='', loglevel=1)
+### Fhem(server, protocol='telnet', port=7072, use_ssl=False, username='', password='', cafile='', loglevel=1)
 Instantiate connector object, socket is not opened, use connect() to
 actually open the socket.
 * server: address of FHEM server
 * param port: telnet/http(s) port of server
 * protocol: 'telnet', 'http' or 'https'
-* ssl: boolean for SSL (TLS) [https as protocol sets ssl=True]
+* use_ssl: boolean for SSL (TLS) [https as protocol sets use_ssl=True]
 * cafile: path to public certificate of your root authority, if
   left empty, https protocol will ignore certificate checks.
 * username: username for http(s) basicAuth validation
@@ -167,12 +171,12 @@ Sends a command to the server and waits for an immediate reply.
 ## class FhemEventQueue()
 Creates a thread that listens to FHEM events and dispatches them to a Python queue.
 
-### FhemEventQueue(server, que, port=7072, protocol='telnet', ssl=False, username='', password='', cafile='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
+### FhemEventQueue(server, que, port=7072, protocol='telnet', use_ssl=False, username='', password='', cafile='', filterlist=None, timeout=0.1, eventtimeout=60, serverregex=None, loglevel=1)
 * server: FHEM server address
 * que: Python Queue object, receives FHEM events as dictionaries
 * port: FHEM telnet port
 * protocol: 'telnet' (or not yet implemented: http, https)
-* ssl: boolean for SSL (TLS)
+* use_ssl: boolean for SSL (TLS)
 * username: for http(s) basicAuth
 * password: (global) telnet or http(s) basicAuth password
 * cafile: path to a certificate authority PEM file, if ommitted server

@@ -1,3 +1,4 @@
+'''API for FHEM homeautomation server'''
 import time
 import datetime
 import json
@@ -29,8 +30,7 @@ except ImportError:
     from urllib2 import install_opener
 
 
-'''API for FHEM homeautomation server'''
-__version__ = '0.4.4'   # needs to be in sync with setup.py and PKG-INFO
+__version__ = '0.5.0'   # needs to be in sync with setup.py and PKG-INFO
 
 # create logger with 'python_fhem' and set default level to Error
 logging.basicConfig(level=logging.ERROR)
@@ -42,13 +42,13 @@ class Fhem:
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
     def __init__(self, server, port=7072,
-                 ssl=False, protocol="telnet", username="", password="", csrf=True,
+                 use_ssl=False, protocol="telnet", username="", password="", csrf=True,
                  cafile="", loglevel=1):
         '''Instantiate connector object.
         :param server: address of FHEM server
         :param port: telnet/http(s) port of server
         :param protocol: 'telnet', 'http' or 'https'
-        :param ssl: boolean for SSL (TLS) [https as protocol sets ssl=True]
+        :param use_ssl: boolean for SSL (TLS) [https as protocol sets use_ssl=True]
         :param cafile: path to public certificate of your root authority, if
         left empty, https protocol will ignore certificate checks.
         :param username: username for http(s) basicAuth validation
@@ -59,7 +59,7 @@ class Fhem:
         validprots = ['http', 'https', 'telnet']
         self.server = server
         self.port = port
-        self.ssl = ssl
+        self.ssl = use_ssl
         self.csrf = csrf
         self.csrftoken = ''
         self.username = username
@@ -70,7 +70,7 @@ class Fhem:
         self.nolog = False
         self.bsock = None
         self.sock = None
-        self.httpsHandler = None
+        self.https_handler = None
 
         # Set LogLevel
         self.set_loglevel(loglevel)
@@ -82,10 +82,10 @@ class Fhem:
             logger.error("Invalid protocol: {}".format(protocol))
 
         # Set authenticication values if#
-        # the protocol is http(s) or ssl is True
+        # the protocol is http(s) or use_ssl is True
         if protocol != "telnet":
             tmp_protocol = "http"
-            if (protocol == "https") or (ssl is True):
+            if (protocol == "https") or (use_ssl is True):
                 self.ssl = True
                 tmp_protocol = "https"
 
@@ -203,12 +203,12 @@ class Fhem:
                 self.context = ssl.create_default_context()
                 self.context.load_verify_locations(cafile=self.cafile)
                 self.context.verify_mode = ssl.CERT_REQUIRED
-            self.httpsHandler = HTTPSHandler(context=self.context)
+            self.https_handler = HTTPSHandler(context=self.context)
             if self.username != "":
-                self.opener = build_opener(self.httpsHandler,
+                self.opener = build_opener(self.https_handler,
                                            self.auth_handler)
             else:
-                self.opener = build_opener(self.httpsHandler)
+                self.opener = build_opener(self.https_handler)
         else:
             if self.username != "":
                 self.opener = build_opener(self.auth_handler)
@@ -231,8 +231,8 @@ class Fhem:
                     self.sock.sendall(buf)
                     logger.info("Sent msg, len={}".format(len(buf)))
                     return None
-                except OSError as e:
-                    logger.error("Failed to send msg, len={}. Exception raised: {}".format(len(buf), e))
+                except OSError as err:
+                    logger.error("Failed to send msg, len={}. Exception raised: {}".format(len(buf), err))
                     self.connection = None
                     return None
             else:
@@ -262,15 +262,10 @@ class Fhem:
                 ans = urlopen(ccmd, paramdata) # , data, 10)  # XXX timeout
                 data = ans.read()
                 return data
-            except URLError as e:
+            except URLError as err:
                 self.connection=False
-                logger.error("Failed to send msg, len={}".format(len(buf)))
+                logger.error("Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
-
-
-    def sendCmd(self, msg):
-        logger.critical("Deprecation: please use send_cmd instead of sendCmd")
-        return self.send_cmd(msg)
 
 
     def send_cmd(self, msg):
@@ -302,8 +297,8 @@ class Fhem:
             data = b''
             try:
                 data = self.sock.recv(32000)
-            except socket.error as e:
-                logger.debug("Exception in non-blocking. Error: {}".format(e))
+            except socket.error as err:
+                logger.debug("Exception in non-blocking. Error: {}".format(err))
                 time.sleep(timeout)
 
             wok = 1
@@ -317,16 +312,11 @@ class Fhem:
                         wok = 0
                     else:
                         data += datai
-                except socket.error:
+                except socket.error as err:
                     wok = 0
-                    logger.debug("Exception in non-blocking. Error: {}".format(e))
+                    logger.debug("Exception in non-blocking. Error: {}".format(err))
             self.sock.setblocking(True)
         return data
-
-
-    def sendRcvCmd(self, msg, timeout=0.1, blocking=True):
-        logger.critical("Deprecation: use send_recv_cmd instead of sendRcvCmd")
-        self.send_recv_cmd(msg, timeout, blocking)
 
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
@@ -377,11 +367,6 @@ class Fhem:
             return jdata
 
 
-    def getDevState(self, dev, timeout=0.1):
-        logger.critical("Deprecation: use get_dev_state insteadd of getDevState")
-        self.get_dev_state(dev, timeout)
-
-
     def get_dev_state(self, dev, timeout=0.1):
         '''Get all FHEM device properties as JSON object
         :param dev: FHEM device name
@@ -396,11 +381,6 @@ class Fhem:
             return {}
 
 
-    def getDevReading(self, dev, reading, timeout=0.1):
-        logger.critical("Deprecation: use get_dev_reading instead of getDevReading")
-        self.get_dev_reading(dev, reading, timeout)
-
-
     def get_dev_reading(self, dev, reading, timeout=0.1):
         '''Get a specific reading from a FHEM device
         :param dev: FHEM device
@@ -413,8 +393,8 @@ class Fhem:
 
         try:
             read = state['Results'][0]['Readings'][reading]['Value']
-        except:
-            logger.error("Reading not defined: {}, {}".format(dev, reading))
+        except Exception as err:
+            logger.error("Reading not defined: {}, {}, {}".format(dev, reading, err))
             return read
         return read
 
@@ -437,8 +417,8 @@ class Fhem:
             try:
                 rr1 = state['Results'][0]
                 reads[reading] = rr1['Readings'][reading]['Value']
-            except:
-                logger.error("Reading not defined: {}, {}".format(dev, reading))
+            except Exception as err:
+                logger.error("Reading not defined: {}, {}, {}".format(dev, reading, err))
         return reads
 
 
@@ -478,12 +458,12 @@ class Fhem:
                 rr1 = state['Results'][0]
                 read = rr1['Readings'][reading]['Time']
                 try:
-                    time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
-                    reads[reading] = time
+                    read_time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
+                    reads[reading] = read_time
                 except (ValueError, TypeError) as err:
                     logger.error("Invalid time format: {}".format(err))
-            except:
-                logger.error("Reading not defined: {} {}".format(dev, reading))
+            except exception as err:
+                logger.error("Reading not defined: {} {} {}".format(dev, reading, err))
         return reads
 
 
@@ -510,7 +490,7 @@ class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
     def __init__(self, server,  que, port=7072, protocol='telnet',
-                 ssl=False, username="", password="", cafile="",
+                 use_ssl=False, username="", password="", cafile="",
                  filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
         ''':param server: FHEM server address
@@ -519,7 +499,7 @@ class FhemEventQueue:
         :param protocol: 'telnet', 'http' or 'https'
           NOTE: for FhemEventQueue, currently only 'telnet' is supported!
         :param port: telnet/http(s) port of server
-        :param ssl: boolean for SSL (TLS)
+        :param use_ssl: boolean for SSL (TLS)
         :param username: http(s) basicAuth username
         :param password: (global) telnet password or http(s) basicAuth password
         :param filterlist: array of filter dictionaires [{"dev"="lamp1"},
@@ -540,7 +520,7 @@ class FhemEventQueue:
         if protocol != 'telnet':
             logger.error("ONLY TELNET is currently supported for EventQueue")
             return
-        self.fhem = Fhem(server=server, port=port, ssl=ssl, username=username,
+        self.fhem = Fhem(server=server, port=port, use_ssl=use_ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
         self.EventThread = threading.Thread(target=self._event_worker_thread,
