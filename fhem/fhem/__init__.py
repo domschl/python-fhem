@@ -73,7 +73,7 @@ class Fhem:
         self.httpsHandler = None
 
         # Set LogLevel
-        set_loglevel(loglevel)
+        self.set_loglevel(loglevel)
 
         # Check if protocol is supported
         if protocol in validprots:
