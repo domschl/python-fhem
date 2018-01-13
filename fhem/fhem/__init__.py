@@ -366,8 +366,8 @@ class Fhem:
         try:
             sdata = data.decode('utf-8')
             jdata = json.loads(sdata)
-        except:
-            logger.error("Failed to decode json, exception raised. {}".format(data))
+        except Exception as err:
+            logger.error("Failed to decode json, exception raised. {} {}".format(data, err))
             return {}
         if len(jdata[u'Results']) == 0:
             logger.error("Query had no result.")
@@ -479,9 +479,9 @@ class Fhem:
                 read = rr1['Readings'][reading]['Time']
                 try:
                     time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
-                    reads[reading] = time 
+                    reads[reading] = time
                 except (ValueError, TypeError) as err:
-                    logger.error("Invalid time format: {}", err)
+                    logger.error("Invalid time format: {}".format(err))
             except:
                 logger.error("Reading not defined: {} {}".format(dev, reading))
         return reads
