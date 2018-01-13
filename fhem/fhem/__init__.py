@@ -439,6 +439,53 @@ class Fhem:
                     print("E - Reading not defined:", dev, reading)
         return reads
 
+    def get_dev_reading_time(self, dev, reading, timeout=0.1):
+        '''Get the datetime of a specific reading from a FHEM device
+        :param dev: FHEM device
+        :param reading: name of FHEM reading
+        :param timeout: timeout for reply'''
+        read = None
+        state = self.get_dev_state(dev, timeout=timeout)
+        if state == {}:
+            return None
+        try:
+            read = state['Results'][0]['Readings'][reading]['Time']
+        except:
+            if self.loglevel > 0:
+                print("E - Reading not defined:", dev, reading)
+            return None
+        try:
+            time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
+        except ValueError as err:
+            if self.loglevel > 0:
+                print("E - Invalid time format: {}", err)
+            return None
+        return time
+
+    def get_dev_readings_time(self, dev, readings, timeout=0.1):
+        '''Get a list of datetimes of readings for one FHEM device
+        :param dev: FHEM device
+        :param readings: array of FHEM reading names
+        :param timeout: timeout for reply'''
+        reads = {}
+        state = self.get_dev_state(dev, timeout=timeout)
+        if state == {}:
+            return reads
+        for reading in readings:
+            try:
+                rr1 = state['Results'][0]
+                read = rr1['Readings'][reading]['Time']
+                try:
+                    time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
+                    reads[reading] = time 
+                except ValueError as err:
+                    if self.loglevel > 0:
+                        print("E - Invalid time format: {}", err)
+            except:
+                if self.loglevel > 0:
+                    print("E - Reading not defined:", dev, reading)
+        return reads
+
     def getFhemState(self, timeout=0.1):
         if self.loglevel > 0:
             print("Deprecation: use get_fhem_state instead of getFhemState")

@@ -24,9 +24,11 @@ pip install [-U] -e .
 
 
 ## History
-0.4.0: csrf token support (FHEM 5.8 requirement)
+0.4.3: Merged API extensions for getting time of last reading change (logi85, [#5](https://github.com/domschl/python-fhem/commit/11719b41b29a8c2c6192210e3848d9d8aedc5337))
 
 0.4.2: deprecation error message fixed (Ivermue, [#4](https://github.com/domschl/python-fhem/commit/098cd774f2f714267645adbf2ee4556edf426229))
+
+0.4.0: csrf token support (FHEM 5.8 requirement)
 
 
 ## Usage:
@@ -114,6 +116,18 @@ Get a specific reading from a FHEM device
 
 ### get_dev_readings(dev, readings, timeout=0.1)
 Get a list of readings for one FHEM device
+* dev: FHEM device
+* readings: array of FHEM reading names
+* timeout: timeout for reply
+
+### get_dev_reading_time(dev, reading, timeout=0.1)
+Get datetime of last change of a reading from a FHEM device
+* dev: FHEM device
+* reading: name of FHEM reading
+* timeout: timeout for reply
+
+### get_dev_readings_time(dev, readings, timeout=0.1)
+Get a list of datetimes of last change of readings for one FHEM device
 * dev: FHEM device
 * readings: array of FHEM reading names
 * timeout: timeout for reply
