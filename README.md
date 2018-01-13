@@ -24,9 +24,11 @@ pip install [-U] -e .
 
 
 ## History
-0.4.0: csrf token support (FHEM 5.8 requirement)
+0.4.3: Merged [#5] logi85's API extensions to geting reading time
 
 0.4.2: deprecation error message fixed (Ivermue, [#4](https://github.com/domschl/python-fhem/commit/098cd774f2f714267645adbf2ee4556edf426229))
+
+0.4.0: csrf token support (FHEM 5.8 requirement)
 
 
 ## Usage:
