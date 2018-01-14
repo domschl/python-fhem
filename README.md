@@ -25,7 +25,7 @@ pip install [-U] -e .
 
 
 ## History
-0.5: API cleanup. Removed deprecated functions: sendCmd, sendRcvCmd, getDevState, getDevReading (replaced with PEP8 conform names, s.b.). Renamed parameter ssl= -> use_ssl=
+0.5: API cleanup (breaking change!). Removed deprecated functions: sendCmd, sendRcvCmd, getDevState, getDevReading (replaced with PEP8 conform names, s.b.). Renamed parameter ssl= -> use_ssl=
 
 0.4.4: Merged python logger support (ChuckMoe, [#6](https://github.com/domschl/python-fhem/commit/25843d79986031cd654f87781f37d1266d0b116b))
 
