@@ -99,6 +99,14 @@ class Fhem:
         '''create socket connection to server (telnet protocol only)'''
         if self.protocol == 'telnet':
             try:
+                # current code is not working for IPv6:
+                # https://stackoverflow.com/questions/5358021/establishing-an-ipv6-connection-using-sockets-in-python
+                # >>> socket.getaddrinfo("www.python.org", 80, 0, 0, socket.SOL_TCP)
+                # [(2, 1, 6, '', ('82.94.164.162', 80)),
+                #  (10, 1, 6, '', ('2001:888:2000:d::a2', 80, 0, 0))]
+                # 
+                # >>> ourSocket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM, 0)
+                # >>> ourSocket.connect(('2001:888:2000:d::a2', 80, 0, 0))
                 logger.debug("Creating socket...")
                 if self.ssl:
                     self.bsock = socket.socket(socket.AF_INET,
