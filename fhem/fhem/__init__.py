@@ -140,15 +140,19 @@ class Fhem:
                 logger.info("Auth password sent to {}".format(self.server))
         else:  # http(s)
             if self.csrf:
-                dat = self.send("").decode("UTF-8")
-                stp = dat.find("csrf_")
-                if stp != -1:
-                    token = dat[stp:]
-                    token = token[:token.find("'")]
-                    self.csrftoken = token
-                    self.connection = True
+                dat = self.send("")
+                if dat is not None:
+                    dat=dat.decode("UTF-8")
+                    stp = dat.find("csrf_")
+                    if stp != -1:
+                        token = dat[stp:]
+                        token = token[:token.find("'")]
+                        self.csrftoken = token
+                        self.connection = True
+                    else:
+                        logger.error("CSRF token requested for server that doesn't know CSRF")
                 else:
-                    logger.error("CSRF token requested for server that doesn't know CSRF")
+                    logger.error("No valid answer on send when expecting csrf.")
             else:
                 self.connection = True
 
