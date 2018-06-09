@@ -17,7 +17,7 @@ See the [PyPI page](https://pypi.python.org/pypi?:action=display&name=fhem) for 
 pip install [-U] fhem
 ```
 
-### From source:
+### From source
 
 In ```python-fhem/fhem```:
 
@@ -34,6 +34,7 @@ pip install [-U] -e .
 ## History
 
 0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
+
 0.5.1 (2018-01-29): Removed call to logging.basicConfig(), since it was unnecessary and causes breakage if other modules use this too. (heilerich [#8](https://github.com/domschl/python-fhem/issues/8))
 
 0.5: API cleanup (breaking change!). Removed deprecated functions: sendCmd, sendRcvCmd, getDevState, getDevReading (replaced with PEP8 conform names, s.b.). Renamed parameter ssl= -> use_ssl=
