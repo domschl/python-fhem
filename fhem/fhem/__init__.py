@@ -30,7 +30,7 @@ except ImportError:
     from urllib2 import install_opener
 
 
-__version__ = '0.5.1'   # needs to be in sync with setup.py and PKG-INFO
+__version__ = '0.5.2'   # needs to be in sync with setup.py and PKG-INFO
 
 # create logger with 'python_fhem'
 logger = logging.getLogger(__name__)
