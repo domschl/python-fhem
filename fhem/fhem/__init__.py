@@ -1,4 +1,4 @@
-'''API for FHEM homeautomation server'''
+'''API for FHEM homeautomation server, supporting telnet or HTTP/HTTPS connections with authentication and CSRF-token support.'''
 import time
 import datetime
 import json
@@ -30,7 +30,7 @@ except ImportError:
     from urllib2 import install_opener
 
 
-__version__ = '0.5.3'   # needs to be in sync with setup.py and PKG-INFO
+__version__ = '0.5.4'   # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
 
 # create logger with 'python_fhem'
 logger = logging.getLogger(__name__)
@@ -43,16 +43,17 @@ class Fhem:
     def __init__(self, server, port=7072,
                  use_ssl=False, protocol="telnet", username="", password="", csrf=True,
                  cafile="", loglevel=1):
-        '''Instantiate connector object.
+        '''
+        Instantiate connector object.
+
         :param server: address of FHEM server
         :param port: telnet/http(s) port of server
-        :param protocol: 'telnet', 'http' or 'https'
         :param use_ssl: boolean for SSL (TLS) [https as protocol sets use_ssl=True]
-        :param cafile: path to public certificate of your root authority, if
-        left empty, https protocol will ignore certificate checks.
+        :param protocol: 'telnet', 'http' or 'https'
         :param username: username for http(s) basicAuth validation
         :param password: (global) telnet or http(s) password
         :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True
+        :param cafile: path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.
         :param loglevel: 0: critical, 1: errors, 2: info, 3: debug
         '''
         validprots = ['http', 'https', 'telnet']
@@ -163,7 +164,8 @@ class Fhem:
 
 
     def set_loglevel(self, level):
-        '''Set logging level,
+        '''Set logging level.
+
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
         if level == 0:
@@ -323,11 +325,13 @@ class Fhem:
 
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
-        '''Sends a command to the server and waits for an immediate reply.
+        '''
+        Sends a command to the server and waits for an immediate reply.
+
         :param msg: FHEM command (e.g. 'set lamp on')
         :param timeout: waiting time for reply
-        :param blocking: (telnet only) on True: use blocking socket
-        communication (bool)'''
+        :param blocking: (telnet only) on True: use blocking socket communication (bool)
+        '''
         data = b''
         if not self.connected():
             self.connect()
@@ -371,9 +375,12 @@ class Fhem:
 
 
     def get_dev_state(self, dev, timeout=0.1):
-        '''Get all FHEM device properties as JSON object
+        '''
+        Get all FHEM device properties as JSON object
+        
         :param dev: FHEM device name
-        :param timeout: timeout for reply'''
+        :param timeout: timeout for reply
+        '''
         if not self.connected():
             self.connect()
 
@@ -385,10 +392,13 @@ class Fhem:
 
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
-        '''Get a specific reading from a FHEM device
+        '''
+        Get a specific reading from a FHEM device
+        
         :param dev: FHEM device
         :param reading: name of FHEM reading
-        :param timeout: timeout for reply'''
+        :param timeout: timeout for reply
+        '''
         read = None
         state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
@@ -408,10 +418,13 @@ class Fhem:
 
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
-        '''Get a list of readings for one FHEM device
+        '''
+        Get a list of readings for one FHEM device
+        
         :param dev: FHEM device
-        'param readings': array of FHEM reading names
-        :param timeout: timeout for reply'''
+        :param readings: array of FHEM reading names
+        :param timeout: timeout for reply
+        '''
         reads = {}
         state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
@@ -426,10 +439,13 @@ class Fhem:
 
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
-        '''Get the datetime of a specific reading from a FHEM device
+        '''
+        Get the datetime of a specific reading from a FHEM device
+        
         :param dev: FHEM device
         :param reading: name of FHEM reading
-        :param timeout: timeout for reply'''
+        :param timeout: timeout for reply
+        '''
         read = None
         state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
@@ -448,10 +464,13 @@ class Fhem:
 
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
-        '''Get a list of datetimes of readings for one FHEM device
+        '''
+        Get a list of datetimes of readings for one FHEM device
+        
         :param dev: FHEM device
         :param readings: array of FHEM reading names
-        :param timeout: timeout for reply'''
+        :param timeout: timeout for reply
+        '''
         reads = {}
         state = self.get_dev_state(dev, timeout=timeout)
         if state == {}:
@@ -476,9 +495,12 @@ class Fhem:
 
 
     def get_fhem_state(self, timeout=0.1):
-        '''Get FHEM state of all devices, returns a large JSON object with
+        '''
+        Get FHEM state of all devices, returns a large JSON object with
         every single FHEM device and reading state
-        :param timeout: timeout for reply'''
+        
+        :param timeout: timeout for reply
+        '''
         if not self.connected():
             self.connect()
         if self.connected():
@@ -493,27 +515,25 @@ class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
     def __init__(self, server,  que, port=7072, protocol='telnet',
-                 use_ssl=False, username="", password="", cafile="",
+                 use_ssl=False, username="", password="", csrf=True, cafile="",
                  filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
-        ''':param server: FHEM server address
+        '''
+        Construct an event queue object, FHEM events will be queued into the queue given at initialization.
+
+        :param server: FHEM server address
         :param que: Python Queue object, receives FHEM events as dictionaries
         :param port: FHEM telnet port
-        :param protocol: 'telnet', 'http' or 'https'
-          NOTE: for FhemEventQueue, currently only 'telnet' is supported!
-        :param port: telnet/http(s) port of server
+        :param protocol: 'telnet', 'http' or 'https'. NOTE: for FhemEventQueue, currently only 'telnet' is supported!
         :param use_ssl: boolean for SSL (TLS)
         :param username: http(s) basicAuth username
         :param password: (global) telnet password or http(s) basicAuth password
-        :param filterlist: array of filter dictionaires [{"dev"="lamp1"},
-        {"dev"="livingtemp", "reading"="temperature"}]. A
-        filter dictionary can contain devstate (type of FHEM device), dev (FHEM
-        device name) and/or reading conditions.
-        The filterlist works on client side.
+        :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True (currently not used, since telnet-only)
+        :param cafile: path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.
+        :param filterlist: array of filter dictionaires [{"dev"="lamp1"}, {"dev"="livingtemp", "reading"="temperature"}]. A filter dictionary can contain devstate (type of FHEM device), dev (FHEM device name) and/or reading conditions. The filterlist works on client side.
         :param timeout: internal timeout for socket receive (should be short)
         :param eventtimeout: larger timeout for server keep-alive messages
-        :param serverregex: FHEM regex to restrict event messages on server
-        side.
+        :param serverregex: FHEM regex to restrict event messages on server side.
         :param loglevel: 0: no log, 1: errors, 2: info, 3: debug
         '''
         self.set_loglevel(loglevel)
@@ -534,7 +554,9 @@ class FhemEventQueue:
 
 
     def set_loglevel(self, level):
-        '''Set logging level,
+        '''
+        Set logging level,
+        
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
         if level == 0:
