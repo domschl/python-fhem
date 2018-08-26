@@ -1,0 +1,386 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to fhem’s documentation! &#8212; fhem 0.5.3 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-fhem-s-documentation">
+<h1>Welcome to fhem’s documentation!<a class="headerlink" href="#welcome-to-fhem-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="fhem-object">
+<h2>Fhem object<a class="headerlink" href="#fhem-object" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="__init__.Fhem">
+<em class="property">class </em><code class="descclassname">__init__.</code><code class="descname">Fhem</code><span class="sig-paren">(</span><em>server</em>, <em>port=7072</em>, <em>use_ssl=False</em>, <em>protocol='telnet'</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects to FHEM via socket communication with optional SSL and password
+support</p>
+<dl class="method">
+<dt id="__init__.Fhem.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>server</em>, <em>port=7072</em>, <em>use_ssl=False</em>, <em>protocol='telnet'</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate connector object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>server</strong> – address of FHEM server</li>
+<li><strong>port</strong> – telnet/http(s) port of server</li>
+<li><strong>use_ssl</strong> – boolean for SSL (TLS) [https as protocol sets use_ssl=True]</li>
+<li><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’</li>
+<li><strong>username</strong> – username for http(s) basicAuth validation</li>
+<li><strong>password</strong> – (global) telnet or http(s) password</li>
+<li><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True</li>
+<li><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</li>
+<li><strong>loglevel</strong> – 0: critical, 1: errors, 2: info, 3: debug</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="__init__.Fhem.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#__init__.Fhem.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes socket connection. (telnet only)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>create socket connection to server (telnet protocol only)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.connected">
+<code class="descname">connected</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if socket/http(s) session is connected to server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_dev_reading">
+<code class="descname">get_dev_reading</code><span class="sig-paren">(</span><em>dev</em>, <em>reading</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_reading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_reading" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a specific reading from a FHEM device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dev</strong> – FHEM device</li>
+<li><strong>reading</strong> – name of FHEM reading</li>
+<li><strong>timeout</strong> – timeout for reply</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_dev_reading_time">
+<code class="descname">get_dev_reading_time</code><span class="sig-paren">(</span><em>dev</em>, <em>reading</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_reading_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_reading_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the datetime of a specific reading from a FHEM device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dev</strong> – FHEM device</li>
+<li><strong>reading</strong> – name of FHEM reading</li>
+<li><strong>timeout</strong> – timeout for reply</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_dev_readings">
+<code class="descname">get_dev_readings</code><span class="sig-paren">(</span><em>dev</em>, <em>readings</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_readings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_readings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of readings for one FHEM device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dev</strong> – FHEM device</li>
+<li><strong>readings</strong> – array of FHEM reading names</li>
+<li><strong>timeout</strong> – timeout for reply</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_dev_readings_time">
+<code class="descname">get_dev_readings_time</code><span class="sig-paren">(</span><em>dev</em>, <em>readings</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_readings_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_readings_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of datetimes of readings for one FHEM device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dev</strong> – FHEM device</li>
+<li><strong>readings</strong> – array of FHEM reading names</li>
+<li><strong>timeout</strong> – timeout for reply</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_dev_state">
+<code class="descname">get_dev_state</code><span class="sig-paren">(</span><em>dev</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all FHEM device properties as JSON object</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dev</strong> – FHEM device name</li>
+<li><strong>timeout</strong> – timeout for reply</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_fhem_state">
+<code class="descname">get_fhem_state</code><span class="sig-paren">(</span><em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_fhem_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_fhem_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get FHEM state of all devices, returns a large JSON object with
+every single FHEM device and reading state</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> – timeout for reply</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.send">
+<code class="descname">send</code><span class="sig-paren">(</span><em>buf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a buffer to server
+:param buf: binary buffer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.send_cmd">
+<code class="descname">send_cmd</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a command to server.
+:param msg: string with FHEM command, e.g. ‘set lamp on’</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.send_recv_cmd">
+<code class="descname">send_recv_cmd</code><span class="sig-paren">(</span><em>msg</em>, <em>timeout=0.1</em>, <em>blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_recv_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_recv_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a command to the server and waits for an immediate reply.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>msg</strong> – FHEM command (e.g. ‘set lamp on’)</li>
+<li><strong>timeout</strong> – waiting time for reply</li>
+<li><strong>blocking</strong> – (telnet only) on True: use blocking socket communication (bool)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.set_loglevel">
+<code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.set_loglevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set logging level.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="fhemeventqueue-object">
+<h2>FhemEventQueue object<a class="headerlink" href="#fhemeventqueue-object" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="__init__.FhemEventQueue">
+<em class="property">class </em><code class="descclassname">__init__.</code><code class="descname">FhemEventQueue</code><span class="sig-paren">(</span><em>server</em>, <em>que</em>, <em>port=7072</em>, <em>protocol='telnet'</em>, <em>use_ssl=False</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>filterlist=None</em>, <em>timeout=0.1</em>, <em>eventtimeout=60</em>, <em>serverregex=None</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a thread that listens to FHEM events and dispatches them to
+a Python queue.</p>
+<dl class="method">
+<dt id="__init__.FhemEventQueue.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>server</em>, <em>que</em>, <em>port=7072</em>, <em>protocol='telnet'</em>, <em>use_ssl=False</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>filterlist=None</em>, <em>timeout=0.1</em>, <em>eventtimeout=60</em>, <em>serverregex=None</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct an event queue object, FHEM events will be queued into the queue given at initialization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>server</strong> – FHEM server address</li>
+<li><strong>que</strong> – Python Queue object, receives FHEM events as dictionaries</li>
+<li><strong>port</strong> – FHEM telnet port</li>
+<li><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’. NOTE: for FhemEventQueue, currently only ‘telnet’ is supported!</li>
+<li><strong>use_ssl</strong> – boolean for SSL (TLS)</li>
+<li><strong>username</strong> – http(s) basicAuth username</li>
+<li><strong>password</strong> – (global) telnet password or http(s) basicAuth password</li>
+<li><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True (currently not used, since telnet-only)</li>
+<li><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</li>
+<li><strong>filterlist</strong> – array of filter dictionaires [{“dev”=”lamp1”}, {“dev”=”livingtemp”, “reading”=”temperature”}]. A filter dictionary can contain devstate (type of FHEM device), dev (FHEM device name) and/or reading conditions. The filterlist works on client side.</li>
+<li><strong>timeout</strong> – internal timeout for socket receive (should be short)</li>
+<li><strong>eventtimeout</strong> – larger timeout for server keep-alive messages</li>
+<li><strong>serverregex</strong> – FHEM regex to restrict event messages on server side.</li>
+<li><strong>loglevel</strong> – 0: no log, 1: errors, 2: info, 3: debug</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="__init__.FhemEventQueue.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#__init__.FhemEventQueue.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.FhemEventQueue.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop event thread and close socket.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.FhemEventQueue.set_loglevel">
+<code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.set_loglevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set logging level,</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">fhem</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Dominik Schlösser.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
