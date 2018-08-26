@@ -33,7 +33,7 @@ pip install [-U] -e .
 
 ## History
 
-* 0.5.4 (2018-08-26): Documentation cleanup, automatic documentation with sphinx.
+* 0.5.5 (2018-08-26): Documentation cleanup, automatic documentation with sphinx.
 * 0.5.3 (2018-08-26): Fix syntax in exception handler
 * 0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
 * 0.5.1 (2018-01-29): Removed call to logging.basicConfig(), since it was unnecessary and causes breakage if other modules use this too. (heilerich [#8](https://github.com/domschl/python-fhem/issues/8))
