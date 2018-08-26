@@ -1,9 +1,13 @@
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(name='fhem',
       version='0.5.4',
       description='Python API for FHEM home automation server',
-      long_description='Uses socket or http(s) communication to set and get states from FHEM home automation server with optional SSL encryption and password support',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       classifiers=[
           'Development Status :: 4 - Beta',
           'License :: OSI Approved :: MIT License',
