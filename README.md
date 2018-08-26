@@ -102,4 +102,4 @@ while True:
 
 # Documentation
 
-see: [fhem documentation](https://python-fhem.github.io/index.html)
+see: [fhem documentation](https://domschl.github.io/python-fhem/index.html)
