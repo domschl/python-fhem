@@ -7,6 +7,7 @@ setup(name='fhem',
       version='0.5.4',
       description='Python API for FHEM home automation server',
       long_description=long_description,
+      long_description_content_type="text/markdown",
       classifiers=[
           'Development Status :: 4 - Beta',
           'License :: OSI Approved :: MIT License',
