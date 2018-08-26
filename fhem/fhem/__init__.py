@@ -224,6 +224,7 @@ class Fhem:
 
     def send(self, buf):
         '''Sends a buffer to server
+
         :param buf: binary buffer'''
         if len(buf)>0:
             if not self.connected():
@@ -275,6 +276,7 @@ class Fhem:
 
     def send_cmd(self, msg):
         '''Sends a command to server.
+
         :param msg: string with FHEM command, e.g. 'set lamp on'
         '''
         if not self.connected():
@@ -377,7 +379,7 @@ class Fhem:
     def get_dev_state(self, dev, timeout=0.1):
         '''
         Get all FHEM device properties as JSON object
-        
+
         :param dev: FHEM device name
         :param timeout: timeout for reply
         '''
@@ -394,7 +396,7 @@ class Fhem:
     def get_dev_reading(self, dev, reading, timeout=0.1):
         '''
         Get a specific reading from a FHEM device
-        
+
         :param dev: FHEM device
         :param reading: name of FHEM reading
         :param timeout: timeout for reply
@@ -420,7 +422,7 @@ class Fhem:
     def get_dev_readings(self, dev, readings, timeout=0.1):
         '''
         Get a list of readings for one FHEM device
-        
+
         :param dev: FHEM device
         :param readings: array of FHEM reading names
         :param timeout: timeout for reply
@@ -441,7 +443,7 @@ class Fhem:
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         '''
         Get the datetime of a specific reading from a FHEM device
-        
+
         :param dev: FHEM device
         :param reading: name of FHEM reading
         :param timeout: timeout for reply
@@ -466,7 +468,7 @@ class Fhem:
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
         '''
         Get a list of datetimes of readings for one FHEM device
-        
+
         :param dev: FHEM device
         :param readings: array of FHEM reading names
         :param timeout: timeout for reply
@@ -498,7 +500,7 @@ class Fhem:
         '''
         Get FHEM state of all devices, returns a large JSON object with
         every single FHEM device and reading state
-        
+
         :param timeout: timeout for reply
         '''
         if not self.connected():
@@ -556,7 +558,7 @@ class FhemEventQueue:
     def set_loglevel(self, level):
         '''
         Set logging level,
-        
+
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
         if level == 0:
