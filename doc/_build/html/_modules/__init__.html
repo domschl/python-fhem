@@ -258,6 +258,7 @@
 
 <div class="viewcode-block" id="Fhem.send"><a class="viewcode-back" href="../index.html#__init__.Fhem.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sends a buffer to server</span>
+
 <span class="sd">        :param buf: binary buffer&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
@@ -309,6 +310,7 @@
 
 <div class="viewcode-block" id="Fhem.send_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sends a command to server.</span>
+
 <span class="sd">        :param msg: string with FHEM command, e.g. &#39;set lamp on&#39;</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
@@ -411,7 +413,7 @@
 <div class="viewcode-block" id="Fhem.get_dev_state"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get all FHEM device properties as JSON object</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param dev: FHEM device name</span>
 <span class="sd">        :param timeout: timeout for reply</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -428,7 +430,7 @@
 <div class="viewcode-block" id="Fhem.get_dev_reading"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_reading">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_reading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get a specific reading from a FHEM device</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param dev: FHEM device</span>
 <span class="sd">        :param reading: name of FHEM reading</span>
 <span class="sd">        :param timeout: timeout for reply</span>
@@ -454,7 +456,7 @@
 <div class="viewcode-block" id="Fhem.get_dev_readings"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_readings">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_readings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get a list of readings for one FHEM device</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param dev: FHEM device</span>
 <span class="sd">        :param readings: array of FHEM reading names</span>
 <span class="sd">        :param timeout: timeout for reply</span>
@@ -475,7 +477,7 @@
 <div class="viewcode-block" id="Fhem.get_dev_reading_time"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_reading_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_reading_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get the datetime of a specific reading from a FHEM device</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param dev: FHEM device</span>
 <span class="sd">        :param reading: name of FHEM reading</span>
 <span class="sd">        :param timeout: timeout for reply</span>
@@ -500,7 +502,7 @@
 <div class="viewcode-block" id="Fhem.get_dev_readings_time"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_readings_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_readings_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get a list of datetimes of readings for one FHEM device</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param dev: FHEM device</span>
 <span class="sd">        :param readings: array of FHEM reading names</span>
 <span class="sd">        :param timeout: timeout for reply</span>
@@ -532,7 +534,7 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get FHEM state of all devices, returns a large JSON object with</span>
 <span class="sd">        every single FHEM device and reading state</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param timeout: timeout for reply</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
@@ -590,7 +592,7 @@
 <div class="viewcode-block" id="FhemEventQueue.set_loglevel"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.set_loglevel">[docs]</a>    <span class="k">def</span> <span class="nf">set_loglevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Set logging level,</span>
-<span class="sd">        </span>
+
 <span class="sd">        :param level: 0: critical, 1: errors, 2: info, 3: debug</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
