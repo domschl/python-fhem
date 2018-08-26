@@ -33,19 +33,14 @@ pip install [-U] -e .
 
 ## History
 
-0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
-
-0.5.1 (2018-01-29): Removed call to logging.basicConfig(), since it was unnecessary and causes breakage if other modules use this too. (heilerich [#8](https://github.com/domschl/python-fhem/issues/8))
-
-0.5: API cleanup (breaking change!). Removed deprecated functions: sendCmd, sendRcvCmd, getDevState, getDevReading (replaced with PEP8 conform names, s.b.). Renamed parameter ssl= -> use_ssl=
-
-0.4.4: Merged python logger support (ChuckMoe, [#6](https://github.com/domschl/python-fhem/commit/25843d79986031cd654f87781f37d1266d0b116b))
-
-0.4.3: Merged API extensions for getting time of last reading change (logi85, [#5](https://github.com/domschl/python-fhem/commit/11719b41b29a8c2c6192210e3848d9d8aedc5337))
-
-0.4.2: deprecation error message fixed (Ivermue, [#4](https://github.com/domschl/python-fhem/commit/098cd774f2f714267645adbf2ee4556edf426229))
-
-0.4.0: csrf token support (FHEM 5.8 requirement)
+* 0.5.3 (2018-08-26): Fix syntax in exception handler
+* 0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
+* 0.5.1 (2018-01-29): Removed call to logging.basicConfig(), since it was unnecessary and causes breakage if other modules use this too. (heilerich [#8](https://github.com/domschl/python-fhem/issues/8))
+* 0.5: API cleanup (breaking change!). Removed deprecated functions: sendCmd, sendRcvCmd, getDevState, getDevReading (replaced with PEP8 conform names, s.b.). Renamed parameter ssl= -> use_ssl=
+* 0.4.4: Merged python logger support (ChuckMoe, [#6](https://github.com/domschl/python-fhem/commit/25843d79986031cd654f87781f37d1266d0b116b))
+* 0.4.3: Merged API extensions for getting time of last reading change (logi85, [#5](https://github.com/domschl/python-fhem/commit/11719b41b29a8c2c6192210e3848d9d8aedc5337))
+* 0.4.2: deprecation error message fixed (Ivermue, [#4](https://github.com/domschl/python-fhem/commit/098cd774f2f714267645adbf2ee4556edf426229))
+* 0.4.0: csrf token support (FHEM 5.8 requirement)
 
 ## Usage
 

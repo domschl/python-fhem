@@ -30,7 +30,7 @@ except ImportError:
     from urllib2 import install_opener
 
 
-__version__ = '0.5.2'   # needs to be in sync with setup.py and PKG-INFO
+__version__ = '0.5.3'   # needs to be in sync with setup.py and PKG-INFO
 
 # create logger with 'python_fhem'
 logger = logging.getLogger(__name__)
@@ -465,7 +465,7 @@ class Fhem:
                     reads[reading] = read_time
                 except (ValueError, TypeError) as err:
                     logger.error("Invalid time format: {}".format(err))
-            except exception as err:
+            except Exception as err:
                 logger.error("Reading not defined: {} {} {}".format(dev, reading, err))
         return reads
 
