@@ -495,6 +495,13 @@ class Fhem:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
 
+    def _parse_filters(self, name, value, not_value, filter_list, case_sensitive):
+        compare = "=" if case_sensitive else "~"
+        if value:
+            filter_list.append("{}{}{}".format(name, compare, value))
+        elif not_value:
+            filter_list.append("{}!{}{}".format(name, compare, not_value))
+
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
         """
@@ -515,27 +522,20 @@ class Fhem:
         :param timeout: timeout for reply
         :return: dict of fhem devices
         """
-        text = []
         if not self.connected():
             self.connect()
         if self.connected():
-            cs = "=" if case_sensitive else "~"
-            if name or nname:
-                text.append("NAME{}{}{}".format("!" if nname else "", cs, name if name else nname))
-            if state or nstate:
-                text.append("STATE{}{}{}".format("!" if nstate else "", cs, state if state else nstate))
-            if group or ngroup:
-                text.append("group{}{}{}".format("!" if ngroup else "", cs, group if group else ngroup))
-            if room or nroom:
-                text.append("room{}{}{}".format("!" if nroom else "", cs, room if room else nroom))
-            if device_type or ndevice_type:
-                text.append(
-                    "TYPE{}{}{}".format("!" if ndevice_type else "", cs, device_type if device_type else ndevice_type))
-            if filter:
+            filter_list = []
+            self._parse_filters("NAME", name, nname, filter_list, case_sensitive)
+            self._parse_filters("STATE", state, nstate, filter_list, case_sensitive)
+            self._parse_filters("group", group, ngroup, filter_list, case_sensitive)
+            self._parse_filters("room", room, nroom, filter_list, case_sensitive)
+            self._parse_filters("TYPE", device_type, ndevice_type, filter_list, case_sensitive)
+            if filters:
                 for key, value in filters.items():
-                    text.append("{}{}{}".format(key, cs, value))
-            result = self.send_recv_cmd("jsonlist2 {}".format(":FILTER=".join(text)), blocking=False,
-                                        timeout=timeout)
+                    filter_list.append("{}{}{}".format(key, "=" if case_sensitive else "~", value))
+            cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
+            result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
             return result
         else:
             logger.error("Failed to get fhem state. Not connected.")
