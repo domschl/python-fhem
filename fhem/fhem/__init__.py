@@ -513,6 +513,52 @@ class Fhem:
             return {}
 
 
+    def get(self, name=None, state=None, group=None, room=None, type=None, nname=None, nstate=None, ngroup=None,
+            nroom=None, ntype=None, case_sensitive=None, filter=None, timeout=0.1):
+        """
+        Get FHEM state of devices, filter by parameters.
+
+        :param name: regex for name
+        :param state: regex for state
+        :param group: regex for group
+        :param room: regex for room
+        :param type: regex for type
+        :param nname: not name
+        :param nstate: not state
+        :param ngroup: not group
+        :param nroom: not room
+        :param ntype: not type
+        :param case_sensitive: use case_sensitive instead of
+        :param filter: dict of filter - key=attribute/internal/reading, value=regex for value
+        :param timeout: timeout for reply
+        :return: dict of fhem devices
+        """
+        text = []
+        if not self.connected():
+            self.connect()
+        if self.connected():
+            cs = "=" if case_sensitive else "~"
+            if name or nname:
+                text.append("NAME{}{}{}".format("!" if nname else "", cs, name if name else nname))
+            if state or nstate:
+                text.append("STATE{}{}{}".format("!" if nstate else "", cs, state if state else nstate))
+            if group or ngroup:
+                text.append("group{}{}{}".format("!" if ngroup else "", cs, group if group else ngroup))
+            if room or nroom:
+                text.append("room{}{}{}".format("!" if nroom else "", cs, room if room else nroom))
+            if type or ntype:
+                text.append("TYPE{}{}{}".format("!" if ntype else "", cs, type if type else ntype))
+            if filter:
+                for key, value in filter.items():
+                    text.append("{}{}{}".format(key, cs, value))
+            result = self.send_recv_cmd("jsonlist2 {}".format(":FILTER=".join(text)), blocking=False,
+                                        timeout=timeout)
+            return result
+        else:
+            logger.error("Failed to get fhem state. Not connected.")
+            return {}
+
+
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
