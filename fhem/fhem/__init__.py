@@ -6,6 +6,7 @@ import socket
 import ssl
 import threading
 import logging
+
 try:
     # Python 3.x
     from urllib.parse import quote
@@ -29,17 +30,16 @@ except ImportError:
     from urllib2 import build_opener
     from urllib2 import install_opener
 
-
-__version__ = '0.5.4'   # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
+__version__ = '0.5.4'  # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
 
 # create logger with 'python_fhem'
 logger = logging.getLogger(__name__)
 
 
 class Fhem:
-
     '''Connects to FHEM via socket communication with optional SSL and password
     support'''
+
     def __init__(self, server, port=7072,
                  use_ssl=False, protocol="telnet", username="", password="", csrf=True,
                  cafile="", loglevel=1):
@@ -95,7 +95,6 @@ class Fhem:
 
             self._install_opener()
 
-
     def connect(self):
         '''create socket connection to server (telnet protocol only)'''
         if self.protocol == 'telnet':
@@ -143,7 +142,7 @@ class Fhem:
             if self.csrf:
                 dat = self.send("")
                 if dat is not None:
-                    dat=dat.decode("UTF-8")
+                    dat = dat.decode("UTF-8")
                     stp = dat.find("csrf_")
                     if stp != -1:
                         token = dat[stp:]
@@ -157,11 +156,9 @@ class Fhem:
             else:
                 self.connection = True
 
-
     def connected(self):
         '''Returns True if socket/http(s) session is connected to server.'''
         return self.connection
-
 
     def set_loglevel(self, level):
         '''Set logging level.
@@ -177,7 +174,6 @@ class Fhem:
         elif level == 3:
             logger.setLevel(logging.DEBUG)
 
-
     def close(self):
         '''Closes socket connection. (telnet only)'''
         if self.protocol == 'telnet':
@@ -190,7 +186,6 @@ class Fhem:
                 logger.error("Cannot disconnect, not connected")
         else:
             self.connection = False
-
 
     def _install_opener(self):
         self.opener = None
@@ -221,12 +216,11 @@ class Fhem:
             logger.debug("Setting up opener on: {}".format(self.baseurlauth))
             install_opener(self.opener)
 
-
     def send(self, buf):
         '''Sends a buffer to server
 
         :param buf: binary buffer'''
-        if len(buf)>0:
+        if len(buf) > 0:
             if not self.connected():
                 logger.debug("Not connected, trying to connect...")
                 self.connect()
@@ -265,14 +259,13 @@ class Fhem:
                     ccmd = self.baseurltoken
 
                 logger.info("Request: {}".format(ccmd))
-                ans = urlopen(ccmd, paramdata) # , data, 10)  # XXX timeout
+                ans = urlopen(ccmd, paramdata)  # , data, 10)  # XXX timeout
                 data = ans.read()
                 return data
             except URLError as err:
-                self.connection=False
+                self.connection = False
                 logger.error("Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
-
 
     def send_cmd(self, msg):
         '''Sends a command to server.
@@ -293,7 +286,6 @@ class Fhem:
                 return None
         else:
             return self.send(msg)
-
 
     def _recv_nonblocking(self, timeout=0.1):
         if not self.connected():
@@ -324,7 +316,6 @@ class Fhem:
                     logger.debug("Exception in non-blocking. Error: {}".format(err))
             self.sock.setblocking(True)
         return data
-
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
         '''
@@ -375,7 +366,6 @@ class Fhem:
             logger.info("JSON answer received.")
             return jdata
 
-
     def get_dev_state(self, dev, timeout=0.1):
         '''
         Get all FHEM device properties as JSON object
@@ -391,7 +381,6 @@ class Fhem:
         else:
             logger.error("Failed to get dev state for {}. Not connected.".format(dev))
             return {}
-
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
         '''
@@ -413,11 +402,9 @@ class Fhem:
             return read
         return read
 
-
     def getDevReadings(self, dev, reading, timeout=0.1):
         logger.critical("Deprecation: use get_dev_readings instead of getDevReadings")
         self.get_dev_readings(dev, reading, timeout)
-
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
         '''
@@ -438,7 +425,6 @@ class Fhem:
             except Exception as err:
                 logger.error("Reading not defined: {}, {}, {}".format(dev, reading, err))
         return reads
-
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         '''
@@ -463,7 +449,6 @@ class Fhem:
             logger.error("Invalid time format: {}".format(err))
             return None
         return time
-
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
         '''
@@ -490,11 +475,9 @@ class Fhem:
                 logger.error("Reading not defined: {} {} {}".format(dev, reading, err))
         return reads
 
-
     def getFhemState(self, timeout=0.1):
         logger.critical("Deprecation: use get_fhem_state instead of getFhemState")
         self.get_fhem_state(timeout)
-
 
     def get_fhem_state(self, timeout=0.1):
         '''
@@ -512,9 +495,8 @@ class Fhem:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
 
-
-    def get(self, name=None, state=None, group=None, room=None, type=None, nname=None, nstate=None, ngroup=None,
-            nroom=None, ntype=None, case_sensitive=None, filter=None, timeout=0.1):
+    def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
+            nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
         """
         Get FHEM state of devices, filter by parameters.
 
@@ -522,14 +504,14 @@ class Fhem:
         :param state: regex for state
         :param group: regex for group
         :param room: regex for room
-        :param type: regex for type
+        :param device_type: regex for type
         :param nname: not name
         :param nstate: not state
         :param ngroup: not group
         :param nroom: not room
-        :param ntype: not type
+        :param ndevice_type: not type
         :param case_sensitive: use case_sensitive instead of
-        :param filter: dict of filter - key=attribute/internal/reading, value=regex for value
+        :param filters: dict of filter - key=attribute/internal/reading, value=regex for value
         :param timeout: timeout for reply
         :return: dict of fhem devices
         """
@@ -546,10 +528,11 @@ class Fhem:
                 text.append("group{}{}{}".format("!" if ngroup else "", cs, group if group else ngroup))
             if room or nroom:
                 text.append("room{}{}{}".format("!" if nroom else "", cs, room if room else nroom))
-            if type or ntype:
-                text.append("TYPE{}{}{}".format("!" if ntype else "", cs, type if type else ntype))
+            if device_type or ndevice_type:
+                text.append(
+                    "TYPE{}{}{}".format("!" if ndevice_type else "", cs, device_type if device_type else ndevice_type))
             if filter:
-                for key, value in filter.items():
+                for key, value in filters.items():
                     text.append("{}{}{}".format(key, cs, value))
             result = self.send_recv_cmd("jsonlist2 {}".format(":FILTER=".join(text)), blocking=False,
                                         timeout=timeout)
@@ -562,7 +545,8 @@ class Fhem:
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
     a Python queue.'''
-    def __init__(self, server,  que, port=7072, protocol='telnet',
+
+    def __init__(self, server, que, port=7072, protocol='telnet',
                  use_ssl=False, username="", password="", csrf=True, cafile="",
                  filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
@@ -600,7 +584,6 @@ class FhemEventQueue:
         self.EventThread.setDaemon(True)
         self.EventThread.start()
 
-
     def set_loglevel(self, level):
         '''
         Set logging level,
@@ -615,7 +598,6 @@ class FhemEventQueue:
             logger.setLevel(logging.INFO)
         elif level == 3:
             logger.setLevel(logging.DEBUG)
-
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
                              eventtimeout=120):
@@ -655,7 +637,7 @@ class FhemEventQueue:
                             val = ''
                             for i in range(4, len(li)):
                                 val += li[i]
-                                if i < len(li)-1:
+                                if i < len(li) - 1:
                                     val += " "
                             vl = val.split(" ")
                             val = ''
@@ -693,19 +675,19 @@ class FhemEventQueue:
                                             adQ = True
                                 if adQ:
                                     ev = {
-                                            'timestamp': dt,
-                                            'devicetype': devtype,
-                                            'device': dev,
-                                            'reading': read,
-                                            'value': val,
-                                            'unit': unit
-                                          }
+                                        'timestamp': dt,
+                                        'devicetype': devtype,
+                                        'device': dev,
+                                        'reading': read,
+                                        'value': val,
+                                        'unit': unit
+                                    }
                                     que.put(ev)
             time.sleep(timeout)
         self.fhem.close()
         return
 
-
     def close(self):
         '''Stop event thread and close socket.'''
         self.eventThreadActive = False
+
