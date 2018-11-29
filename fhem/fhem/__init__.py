@@ -495,12 +495,17 @@ class Fhem:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
 
+    def _append_filter(self, name, value, compare, string, filter_list):
+        value_list = [value] if isinstance(value, str) else value
+        values = ",".join(value_list)
+        filter_list.append(string.format(name, compare, values))
+
     def _parse_filters(self, name, value, not_value, filter_list, case_sensitive):
         compare = "=" if case_sensitive else "~"
         if value:
-            filter_list.append("{}{}{}".format(name, compare, value))
+            self._append_filter(name, value, compare, "{}{}{}", filter_list)
         elif not_value:
-            filter_list.append("{}!{}{}".format(name, compare, not_value))
+            self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
