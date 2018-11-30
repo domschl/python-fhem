@@ -507,6 +507,24 @@ class Fhem:
         elif not_value:
             self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
+    def _response_filter(self, response, arg, value, only_value=None):
+        result = {}
+        if len(arg) == 1:
+            for r in response['Results']:
+                if only_value:
+                    if value in r and arg[0] in r[value] and 'Value' in r[value][arg[0]]:
+                        result[r['Name']] = r[value][arg[0]]['Value']
+                else:
+                    if value in r and arg[0] in r[value]:
+                        result[r['Name']] = r[value][arg[0]]
+        elif not len(arg):
+            for r in response['Results']:
+                result[r['Name']] = r[value]
+        else:
+            logger.error("Only one positional argument allowed")
+            return {}
+        return result
+
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
         """
@@ -546,6 +564,21 @@ class Fhem:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
 
+    def get_states(self, **kwargs):
+        response = self.get(**kwargs)
+        return {r['Name']: r['Readings']['state']['Value'] for r in response['Results'] if 'state' in r['Readings']}
+
+    def get_readings(self, arg, only_value=False, **kwargs):
+        response = self.get(**kwargs)
+        return self._response_filter(response, [arg], 'Readings', only_value=only_value)
+
+    def get_attributes(self, *arg, **kwargs):
+        response = self.get(**kwargs)
+        return self._response_filter(response, arg, 'Attributes')
+
+    def get_internals(self, *arg, **kwargs):
+        response = self.get(**kwargs)
+        return self._response_filter(response, arg, 'Internals')
 
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
