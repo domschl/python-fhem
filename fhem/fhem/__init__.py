@@ -476,24 +476,12 @@ class Fhem:
         return reads
 
     def getFhemState(self, timeout=0.1):
-        logger.critical("Deprecation: use get_fhem_state instead of getFhemState")
-        self.get_fhem_state(timeout)
+        logger.critical("Deprecation: use get() without parameters instead of getFhemState")
+        self.get(timeout)
 
     def get_fhem_state(self, timeout=0.1):
-        '''
-        Get FHEM state of all devices, returns a large JSON object with
-        every single FHEM device and reading state
-
-        :param timeout: timeout for reply
-        '''
-        if not self.connected():
-            self.connect()
-        if self.connected():
-            return self.send_recv_cmd("jsonlist2", blocking=False,
-                                      timeout=timeout)
-        else:
-            logger.error("Failed to get fhem state. Not connected.")
-            return {}
+        logger.critical("Deprecation: use get() without parameters instead of get_fhem_state")
+        self.get(timeout)
 
     def _append_filter(self, name, value, compare, string, filter_list):
         value_list = [value] if isinstance(value, str) else value
