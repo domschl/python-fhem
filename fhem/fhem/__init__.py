@@ -528,20 +528,21 @@ class Fhem:
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
         """
-        Get FHEM state of devices, filter by parameters.
+        Get FHEM state of devices, filter by parameters. See https://fhem.de/commandref.html#devspec
+        This function abstracts often used filters and reduces transfered data size
 
-        :param name: regex for name
-        :param state: regex for state
-        :param group: regex for group
-        :param room: regex for room
-        :param device_type: regex for type
+        :param name: str or list, regex for device name in fhem
+        :param state: str or list, regex for device state in fhem
+        :param group: str or list, regex to filter fhem groups
+        :param room: str or list, regex to filter fhem room
+        :param device_type: str or list, regex to filter fhem device type
         :param nname: not name
         :param nstate: not state
         :param ngroup: not group
         :param nroom: not room
         :param ndevice_type: not type
-        :param case_sensitive: use case_sensitive instead of
-        :param filters: dict of filter - key=attribute/internal/reading, value=regex for value
+        :param case_sensitive: bool, use case_sensitivity for all filter functions
+        :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
         :param timeout: timeout for reply
         :return: dict of fhem devices
         """
@@ -565,20 +566,49 @@ class Fhem:
             return {}
 
     def get_states(self, **kwargs):
+        """
+        Return only device states, can use filters from get()
+
+        :param kwargs: use keyword arguments from get function
+        :return: dict of fhem devices with states
+        """
         response = self.get(**kwargs)
         return {r['Name']: r['Readings']['state']['Value'] for r in response['Results'] if 'state' in r['Readings']}
 
     def get_readings(self, arg, only_value=False, **kwargs):
+        """
+        Return readings of a device, can use filters from get()
+
+        :param arg: str, Get only specified reading, return all readings of device when parameter not given
+        :param only_value: return only value of reading, not timestamp
+        :param kwargs: use keyword arguments from get function
+        :return: dict of fhem devices with readings
+        """
         response = self.get(**kwargs)
         return self._response_filter(response, [arg], 'Readings', only_value=only_value)
 
     def get_attributes(self, *arg, **kwargs):
+        """
+        Return attributes of a device, can use filters from get()
+
+        :param arg: str, Get only specified attribute, return all attributes of device when parameter not given
+        :param kwargs: use keyword arguments from get function
+        :return: dict of fhem devices with attributes
+        """
         response = self.get(**kwargs)
         return self._response_filter(response, arg, 'Attributes')
 
     def get_internals(self, *arg, **kwargs):
+        """
+        Return internals of a device, can use filters from get()
+
+        :param arg: str, Get only specified internal, return all internals of device when parameter not given
+        :param kwargs: use keyword arguments from get function
+        :return: dict of fhem devices with internals
+        """
         response = self.get(**kwargs)
         return self._response_filter(response, arg, 'Internals')
+
 
 class FhemEventQueue:
     '''Creates a thread that listens to FHEM events and dispatches them to
