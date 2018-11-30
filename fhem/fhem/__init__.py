@@ -507,7 +507,7 @@ class Fhem:
                         result[r['Name']] = r[value][arg[0]]
         elif not len(arg):
             for r in response['Results']:
-                result[r['Name']] = r[value]
+                result[r['Name']] = r[value] if not only_value else {k: v['Value'] for k, v in r[value].items()}
         else:
             logger.error("Only one positional argument allowed")
             return {}
