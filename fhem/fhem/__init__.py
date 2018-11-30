@@ -563,7 +563,7 @@ class Fhem:
         response = self.get(**kwargs)
         return {r['Name']: r['Readings']['state']['Value'] for r in response['Results'] if 'state' in r['Readings']}
 
-    def get_readings(self, arg, only_value=False, **kwargs):
+    def get_readings(self, *arg, **kwargs):
         """
         Return readings of a device, can use filters from get()
 
@@ -572,8 +572,10 @@ class Fhem:
         :param kwargs: use keyword arguments from get function
         :return: dict of fhem devices with readings
         """
+        only_value = kwargs['only_value'] if 'only_value' in kwargs else None
+        kwargs.pop('only_value', None)
         response = self.get(**kwargs)
-        return self._response_filter(response, [arg], 'Readings', only_value=only_value)
+        return self._response_filter(response, arg, 'Readings', only_value=only_value)
 
     def get_attributes(self, *arg, **kwargs):
         """
