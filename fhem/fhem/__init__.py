@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import re
 import socket
 import ssl
 import threading
@@ -412,25 +413,39 @@ class Fhem:
         elif not_value:
             self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
-    def _parse_timestamp(self, timestamp):
-        try:
-            return datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-        except (ValueError, TypeError) as err:
-            logger.error("Invalid time format: {}".format(err))
-            return None
+    def _convert_data(self, response, k, v):
+        if isinstance(v, str):
+            if re.findall("^[0-9]+$", v):
+                response[k] = int(v)
+            elif re.findall("^[0-9]+\.[0-9]+$", v):
+                response[k] = float(v)
+            elif re.findall("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", v):
+                response[k] = datetime.datetime.strptime(v, '%Y-%m-%d %H:%M:%S')
+        if isinstance(v, dict):
+            self._parse_data_types(response[k])
+        if isinstance(v, list):
+            self._parse_data_types(response[k])
+
+    def _parse_data_types(self, response):
+        if isinstance(response, dict):
+            for k, v in response.items():
+                self._convert_data(response, k, v)
+        if isinstance(response, list):
+            for i, v in enumerate(response):
+                self._convert_data(response, i, v)
 
     def _response_filter(self, response, arg, value, value_only=None, time_only=None):
         if len(arg) > 2:
             logger.error("Too many positional arguments")
             return {}
         result = {}
-        for r in response['Results']:
+        for r in response:
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
                 result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
                                      'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
             elif time_only:
-                result[r['Name']] = {k: self._parse_timestamp(v['Time']) for k, v in r[value].items() if
+                result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
                                      'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
             else:
                 result[r['Name']] = {k: v for k, v in r[value].items() if
@@ -476,7 +491,10 @@ class Fhem:
                     filter_list.append("{}{}{}".format(key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
-            return result
+            if not result:
+                return result
+            self._parse_data_types(result)
+            return result['Results']
         else:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
@@ -491,7 +509,7 @@ class Fhem:
         response = self.get(**kwargs)
         if not response:
             return response
-        return {r['Name']: r['Readings']['state']['Value'] for r in response['Results'] if 'state' in r['Readings']}
+        return {r['Name']: r['Readings']['state']['Value'] for r in response if 'state' in r['Readings']}
 
     def get_readings(self, *arg, **kwargs):
         """
