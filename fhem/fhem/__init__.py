@@ -1,11 +1,11 @@
 '''API for FHEM homeautomation server, supporting telnet or HTTP/HTTPS connections with authentication and CSRF-token support.'''
-import time
 import datetime
 import json
+import logging
 import socket
 import ssl
 import threading
-import logging
+import time
 
 try:
     # Python 3.x
@@ -367,121 +367,38 @@ class Fhem:
             return jdata
 
     def get_dev_state(self, dev, timeout=0.1):
-        '''
-        Get all FHEM device properties as JSON object
-
-        :param dev: FHEM device name
-        :param timeout: timeout for reply
-        '''
-        if not self.connected():
-            self.connect()
-
-        if self.connected():
-            return self.send_recv_cmd("jsonlist2 {}".format(dev), timeout=timeout)
-        else:
-            logger.error("Failed to get dev state for {}. Not connected.".format(dev))
-            return {}
+        logger.critical("Deprecation: use get_device('device') instead of get_dev_state")
+        return self.get_device(dev, timeout=timeout)
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
-        '''
-        Get a specific reading from a FHEM device
-
-        :param dev: FHEM device
-        :param reading: name of FHEM reading
-        :param timeout: timeout for reply
-        '''
-        read = None
-        state = self.get_dev_state(dev, timeout=timeout)
-        if state == {}:
-            return None
-
-        try:
-            read = state['Results'][0]['Readings'][reading]['Value']
-        except Exception as err:
-            logger.error("Reading not defined: {}, {}, {}".format(dev, reading, err))
-            return read
-        return read
+        logger.critical("Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading")
+        return self.get_device_reading(dev, reading, timeout=timeout)
 
     def getDevReadings(self, dev, reading, timeout=0.1):
         logger.critical("Deprecation: use get_dev_readings instead of getDevReadings")
-        self.get_dev_readings(dev, reading, timeout)
+        self.get_dev_readings(dev, reading, timeout=timeout)
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
-        '''
-        Get a list of readings for one FHEM device
-
-        :param dev: FHEM device
-        :param readings: array of FHEM reading names
-        :param timeout: timeout for reply
-        '''
-        reads = {}
-        state = self.get_dev_state(dev, timeout=timeout)
-        if state == {}:
-            return reads
-        for reading in readings:
-            try:
-                rr1 = state['Results'][0]
-                reads[reading] = rr1['Readings'][reading]['Value']
-            except Exception as err:
-                logger.error("Reading not defined: {}, {}, {}".format(dev, reading, err))
-        return reads
+        logger.critical("Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
+        return self.get_device_reading(dev, readings, timeout=timeout)
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
-        '''
-        Get the datetime of a specific reading from a FHEM device
-
-        :param dev: FHEM device
-        :param reading: name of FHEM reading
-        :param timeout: timeout for reply
-        '''
-        read = None
-        state = self.get_dev_state(dev, timeout=timeout)
-        if state == {}:
-            return None
-        try:
-            read = state['Results'][0]['Readings'][reading]['Time']
-        except:
-            logger.error("Reading not defined: {} {}".format(dev, reading))
-            return None
-        try:
-            time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
-        except (ValueError, TypeError) as err:
-            logger.error("Invalid time format: {}".format(err))
-            return None
-        return time
+        logger.critical(
+            "Deprecation: use get_device_reading('device', 'reading', only_time=True) instead of get_dev_reading_time")
+        return self.get_device_reading(dev, reading, timeout=timeout)
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
-        '''
-        Get a list of datetimes of readings for one FHEM device
-
-        :param dev: FHEM device
-        :param readings: array of FHEM reading names
-        :param timeout: timeout for reply
-        '''
-        reads = {}
-        state = self.get_dev_state(dev, timeout=timeout)
-        if state == {}:
-            return reads
-        for reading in readings:
-            try:
-                rr1 = state['Results'][0]
-                read = rr1['Readings'][reading]['Time']
-                try:
-                    read_time = datetime.datetime.strptime(read, '%Y-%m-%d %H:%M:%S')
-                    reads[reading] = read_time
-                except (ValueError, TypeError) as err:
-                    logger.error("Invalid time format: {}".format(err))
-            except Exception as err:
-                logger.error("Reading not defined: {} {} {}".format(dev, reading, err))
-        return reads
+        logger.critical(
+            "Deprecation: use get_device_reading('device', ['reading'], only_time=True) instead of get_dev_reading_time")
+        return self.get_device_reading(dev, readings, timeout=timeout)
 
     def getFhemState(self, timeout=0.1):
         logger.critical("Deprecation: use get() without parameters instead of getFhemState")
-        self.get(timeout)
+        self.get(timeout=timeout)
 
     def get_fhem_state(self, timeout=0.1):
         logger.critical("Deprecation: use get() without parameters instead of get_fhem_state")
-        self.get(timeout)
+        self.get(timeout=timeout)
 
     def _append_filter(self, name, value, compare, string, filter_list):
         value_list = [value] if isinstance(value, str) else value
@@ -495,22 +412,33 @@ class Fhem:
         elif not_value:
             self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
-    def _response_filter(self, response, arg, value, only_value=None):
-        result = {}
-        if len(arg) == 1:
-            for r in response['Results']:
-                if only_value:
-                    if value in r and arg[0] in r[value] and 'Value' in r[value][arg[0]]:
-                        result[r['Name']] = r[value][arg[0]]['Value']
-                else:
-                    if value in r and arg[0] in r[value]:
-                        result[r['Name']] = r[value][arg[0]]
-        elif not len(arg):
-            for r in response['Results']:
-                result[r['Name']] = r[value] if not only_value else {k: v['Value'] for k, v in r[value].items()}
-        else:
-            logger.error("Only one positional argument allowed")
+    def _parse_timestamp(self, timestamp):
+        try:
+            return datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+        except (ValueError, TypeError) as err:
+            logger.error("Invalid time format: {}".format(err))
+            return None
+
+    def _response_filter(self, response, arg, value, value_only=None, time_only=None):
+        if len(arg) > 2:
+            logger.error("Too many positional arguments")
             return {}
+        result = {}
+        for r in response['Results']:
+            arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
+            if value_only:
+                result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
+                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+            elif time_only:
+                result[r['Name']] = {k: self._parse_timestamp(v['Time']) for k, v in r[value].items() if
+                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+            else:
+                result[r['Name']] = {k: v for k, v in r[value].items() if
+                                     (not len(arg) or (len(arg) and k in arg[0]))}
+            if not result[r['Name']]:
+                result.pop(r['Name'], None)
+            elif len(result[r['Name']].values()) == 1:
+                result[r['Name']] = list(result[r['Name']].values())[0]
         return result
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
@@ -561,6 +489,8 @@ class Fhem:
         :return: dict of fhem devices with states
         """
         response = self.get(**kwargs)
+        if not response:
+            return response
         return {r['Name']: r['Readings']['state']['Value'] for r in response['Results'] if 'state' in r['Readings']}
 
     def get_readings(self, *arg, **kwargs):
@@ -568,14 +498,17 @@ class Fhem:
         Return readings of a device, can use filters from get()
 
         :param arg: str, Get only specified reading, return all readings of device when parameter not given
-        :param only_value: return only value of reading, not timestamp
+        :param value_only: return only value of reading, not timestamp
+        :param time_only: return only timestamp of reading as datetime object
         :param kwargs: use keyword arguments from get function
         :return: dict of fhem devices with readings
         """
-        only_value = kwargs['only_value'] if 'only_value' in kwargs else None
-        kwargs.pop('only_value', None)
+        value_only = kwargs['value_only'] if 'value_only' in kwargs else None
+        time_only = kwargs['time_only'] if 'time_only' in kwargs else None
+        kwargs.pop('value_only', None)
+        kwargs.pop('time_only', None)
         response = self.get(**kwargs)
-        return self._response_filter(response, arg, 'Readings', only_value=only_value)
+        return self._response_filter(response, arg, 'Readings', value_only=value_only, time_only=time_only)
 
     def get_attributes(self, *arg, **kwargs):
         """
@@ -598,6 +531,60 @@ class Fhem:
         """
         response = self.get(**kwargs)
         return self._response_filter(response, arg, 'Internals')
+
+    def get_device(self, device, **kwargs):
+        """
+        Get all data from a device
+
+        :param device: str or list,
+        :param kwargs: use keyword arguments from get function
+        :return: dict with data of fhem device
+        """
+        return self.get(name=device, **kwargs)
+
+    def get_device_state(self, device, **kwargs):
+        """
+        Get state of one device
+
+        :param device: str or list,
+        :param kwargs: use keyword arguments from get and get_states functions
+        :return: str when only one else dict
+        """
+        result = self.get_states(name=device, **kwargs)
+        return result if len(result.values()) - 1 else list(result.values())[0]
+
+    def get_device_reading(self, device, *arg, **kwargs):
+        """
+        Get reading(s) of one device
+
+        :param device: str or list,
+        :param arg: str for one reading, list for special readings, empty for all readings
+        :param kwargs: use keyword arguments from get and get_readings functions
+        :return: dict with readings
+        """
+        return self.get_readings(*arg, name=device, **kwargs)
+
+    def get_device_attribute(self, device, *arg, **kwargs):
+        """
+        Get attribute(s) of one device
+
+        :param device: str or list,
+        :param arg: str for one attribute, list for special attributes, empty for all attributes
+        :param kwargs: use keyword arguments from get and get_attributes functions
+        :return: dict with attributes
+        """
+        return self.get_attributes(*arg, name=device, **kwargs)
+
+    def get_device_internal(self, device, *arg, **kwargs):
+        """
+        Get internal(s) of one device
+
+        :param device: str or list,
+        :param arg: str for one internal value, list for special internal values, empty for all internal values
+        :param kwargs: use keyword arguments from get and get_internals functions
+        :return: dict with internals
+        """
+        return self.get_internals(*arg, name=device, **kwargs)
 
 
 class FhemEventQueue:
@@ -748,4 +735,3 @@ class FhemEventQueue:
     def close(self):
         '''Stop event thread and close socket.'''
         self.eventThreadActive = False
-
