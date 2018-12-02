@@ -469,23 +469,26 @@ class Fhem:
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
         """
-        Get FHEM state of devices, filter by parameters. See https://fhem.de/commandref.html#devspec
-        This function abstracts often used filters and reduces transfered data size
+        Get FHEM data of devices, can filter by parameters or custom defined filters.
+        All filters use regular expressions (except full match), so don't forget escaping.
+        Filters can be used by all other get functions.
+        For more information about filters, see https://FHEM.de/commandref.html#devspec
 
-        :param name: str or list, regex for device name in fhem
-        :param state: str or list, regex for device state in fhem
-        :param group: str or list, regex to filter fhem groups
-        :param room: str or list, regex to filter fhem room
-        :param device_type: str or list, regex to filter fhem device type
+        :param name: str or list, device name in FHEM
+        :param state: str or list, state in FHEM
+        :param group: str or list, filter FHEM groups
+        :param room: str or list, filter FHEM room
+        :param device_type: str or list, FHEM device type
         :param nname: not name
         :param nstate: not state
         :param ngroup: not group
         :param nroom: not room
-        :param ndevice_type: not type
+        :param ndevice_type: not device_type
         :param case_sensitive: bool, use case_sensitivity for all filter functions
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
+        :param deprecated: Don't convert to python types and send full FHEM response
         :param timeout: timeout for reply
-        :return: dict of fhem devices
+        :return: dict of FHEM devices
         """
         if not self.connected():
             self.connect()
@@ -503,7 +506,8 @@ class Fhem:
             result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
             if not result or deprecated:
                 return result
-            self._parse_data_types(result['Results'])
+            result = result['Results']
+            self._parse_data_types(result)
             return result
         else:
             logger.error("Failed to get fhem state. Not connected.")
@@ -511,10 +515,10 @@ class Fhem:
 
     def get_states(self, **kwargs):
         """
-        Return only device states, can use filters from get()
+        Return only device states, can use filters from get().
 
-        :param kwargs: use keyword arguments from get function
-        :return: dict of fhem devices with states
+        :param kwargs: Use keyword arguments from get function
+        :return: dict of FHEM devices with states
         """
         response = self.get(**kwargs)
         if not response:
@@ -523,13 +527,13 @@ class Fhem:
 
     def get_readings(self, *arg, **kwargs):
         """
-        Return readings of a device, can use filters from get()
+        Return readings of a device, can use filters from get().
 
-        :param arg: str, Get only specified reading, return all readings of device when parameter not given
+        :param arg: str, Get only a specified reading, return all readings of device when parameter not given
         :param value_only: return only value of reading, not timestamp
-        :param time_only: return only timestamp of reading as datetime object
+        :param time_only: return only timestamp of reading
         :param kwargs: use keyword arguments from get function
-        :return: dict of fhem devices with readings
+        :return: dict of FHEM devices with readings
         """
         value_only = kwargs['value_only'] if 'value_only' in kwargs else None
         time_only = kwargs['time_only'] if 'time_only' in kwargs else None
@@ -544,7 +548,7 @@ class Fhem:
 
         :param arg: str, Get only specified attribute, return all attributes of device when parameter not given
         :param kwargs: use keyword arguments from get function
-        :return: dict of fhem devices with attributes
+        :return: dict of FHEM devices with attributes
         """
         response = self.get(**kwargs)
         return self._response_filter(response, arg, 'Attributes')
@@ -555,7 +559,7 @@ class Fhem:
 
         :param arg: str, Get only specified internal, return all internals of device when parameter not given
         :param kwargs: use keyword arguments from get function
-        :return: dict of fhem devices with internals
+        :return: dict of FHEM devices with internals
         """
         response = self.get(**kwargs)
         return self._response_filter(response, arg, 'Internals')
@@ -566,7 +570,7 @@ class Fhem:
 
         :param device: str or list,
         :param kwargs: use keyword arguments from get function
-        :return: dict with data of fhem device
+        :return: dict with data of specific FHEM device
         """
         return self.get(name=device, **kwargs)
 
@@ -576,7 +580,7 @@ class Fhem:
 
         :param device: str or list,
         :param kwargs: use keyword arguments from get and get_states functions
-        :return: str when only one else dict
+        :return: str, int, float when only specific value requested else dict
         """
         result = self.get_states(name=device, **kwargs)
         return self._sand_down(result)
@@ -588,7 +592,7 @@ class Fhem:
         :param device: str or list,
         :param arg: str for one reading, list for special readings, empty for all readings
         :param kwargs: use keyword arguments from get and get_readings functions
-        :return: dict with readings
+        :return: str, int, float when only specific value requested else dict
         """
         result = self.get_readings(*arg, name=device, **kwargs)
         return self._sand_down(result)
@@ -599,8 +603,8 @@ class Fhem:
 
         :param device: str or list,
         :param arg: str for one attribute, list for special attributes, empty for all attributes
-        :param kwargs: use keyword arguments from get and get_attributes functions
-        :return: dict with attributes
+        :param kwargs: use keyword arguments from get function
+        :return: str, int, float when only specific value requested else dict
         """
         result = self.get_attributes(*arg, name=device, **kwargs)
         return self._sand_down(result)
@@ -611,8 +615,8 @@ class Fhem:
 
         :param device: str or list,
         :param arg: str for one internal value, list for special internal values, empty for all internal values
-        :param kwargs: use keyword arguments from get and get_internals functions
-        :return: dict with internals
+        :param kwargs: use keyword arguments from get function
+        :return: str, int, float when only specific value requested else dict
         """
         result = self.get_internals(*arg, name=device, **kwargs)
         return self._sand_down(result)
