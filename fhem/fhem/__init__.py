@@ -414,7 +414,11 @@ class Fhem:
             self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
     def _convert_data(self, response, k, v):
-        if isinstance(v, str):
+        try:
+            test_type = unicode
+        except NameError:
+            test_type = str
+        if isinstance(v, test_type):
             if re.findall("^[0-9]+$", v):
                 response[k] = int(v)
             elif re.findall("^[0-9]+\.[0-9]+$", v):
