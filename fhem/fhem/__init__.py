@@ -369,37 +369,37 @@ class Fhem:
 
     def get_dev_state(self, dev, timeout=0.1):
         logger.critical("Deprecation: use get_device('device') instead of get_dev_state")
-        return self.get_device(dev, timeout=timeout)
+        return self.get_device(dev, timeout=timeout, deprecated=True)
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
         logger.critical("Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading")
-        return self.get_device_reading(dev, reading, timeout=timeout)
+        return self.get_device_reading(dev, reading, value_only=True, timeout=timeout)
 
     def getDevReadings(self, dev, reading, timeout=0.1):
-        logger.critical("Deprecation: use get_dev_readings instead of getDevReadings")
-        self.get_dev_readings(dev, reading, timeout=timeout)
+        logger.critical("Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings")
+        return self.get_device_reading(dev, timeout=timeout, value_only=True, deprecated=True)
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
         logger.critical("Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
-        return self.get_device_reading(dev, readings, timeout=timeout)
+        return self.get_device_reading(dev, readings, timeout=timeout, value_only=True, deprecated=True)
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         logger.critical(
             "Deprecation: use get_device_reading('device', 'reading', only_time=True) instead of get_dev_reading_time")
-        return self.get_device_reading(dev, reading, timeout=timeout)
+        return self.get_device_reading(dev, reading, timeout=timeout, time_only=True)
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
         logger.critical(
             "Deprecation: use get_device_reading('device', ['reading'], only_time=True) instead of get_dev_reading_time")
-        return self.get_device_reading(dev, readings, timeout=timeout)
+        return self.get_device_reading(dev, readings, timeout=timeout, time_only=True)
 
     def getFhemState(self, timeout=0.1):
         logger.critical("Deprecation: use get() without parameters instead of getFhemState")
-        self.get(timeout=timeout)
+        return self.get(timeout=timeout, deprecated=True)
 
     def get_fhem_state(self, timeout=0.1):
         logger.critical("Deprecation: use get() without parameters instead of get_fhem_state")
-        self.get(timeout=timeout)
+        return self.get(timeout=timeout, deprecated=True)
 
     def _append_filter(self, name, value, compare, string, filter_list):
         value_list = [value] if isinstance(value, str) else value
@@ -439,7 +439,7 @@ class Fhem:
             logger.error("Too many positional arguments")
             return {}
         result = {}
-        for r in response:
+        for r in response if 'totalResultsReturned' not in response else response['Results']:
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
                 result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
@@ -456,8 +456,11 @@ class Fhem:
                 result[r['Name']] = list(result[r['Name']].values())[0]
         return result
 
+    def _sand_down(self, value):
+        return value if len(value.values()) - 1 else list(value.values())[0]
+
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
-            nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1):
+            nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
         """
         Get FHEM state of devices, filter by parameters. See https://fhem.de/commandref.html#devspec
         This function abstracts often used filters and reduces transfered data size
@@ -491,10 +494,10 @@ class Fhem:
                     filter_list.append("{}{}{}".format(key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
-            if not result:
+            if not result or deprecated:
                 return result
-            self._parse_data_types(result)
-            return result['Results']
+            self._parse_data_types(result['Results'])
+            return result
         else:
             logger.error("Failed to get fhem state. Not connected.")
             return {}
@@ -569,7 +572,7 @@ class Fhem:
         :return: str when only one else dict
         """
         result = self.get_states(name=device, **kwargs)
-        return result if len(result.values()) - 1 else list(result.values())[0]
+        return self._sand_down(result)
 
     def get_device_reading(self, device, *arg, **kwargs):
         """
@@ -580,7 +583,8 @@ class Fhem:
         :param kwargs: use keyword arguments from get and get_readings functions
         :return: dict with readings
         """
-        return self.get_readings(*arg, name=device, **kwargs)
+        result = self.get_readings(*arg, name=device, **kwargs)
+        return self._sand_down(result)
 
     def get_device_attribute(self, device, *arg, **kwargs):
         """
@@ -591,7 +595,8 @@ class Fhem:
         :param kwargs: use keyword arguments from get and get_attributes functions
         :return: dict with attributes
         """
-        return self.get_attributes(*arg, name=device, **kwargs)
+        result = self.get_attributes(*arg, name=device, **kwargs)
+        return self._sand_down(result)
 
     def get_device_internal(self, device, *arg, **kwargs):
         """
@@ -602,7 +607,8 @@ class Fhem:
         :param kwargs: use keyword arguments from get and get_internals functions
         :return: dict with internals
         """
-        return self.get_internals(*arg, name=device, **kwargs)
+        result = self.get_internals(*arg, name=device, **kwargs)
+        return self._sand_down(result)
 
 
 class FhemEventQueue:
