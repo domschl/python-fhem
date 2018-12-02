@@ -401,10 +401,38 @@ class Fhem:
         logger.critical("Deprecation: use get() without parameters instead of get_fhem_state")
         return self.get(timeout=timeout, deprecated=True)
 
-    def _append_filter(self, name, value, compare, string, filter_list):
+    @classmethod
+    def _sand_down(cls, value):
+        return value if len(value.values()) - 1 else list(value.values())[0]
+
+    @classmethod
+    def _append_filter(cls, name, value, compare, string, filter_list):
         value_list = [value] if isinstance(value, str) else value
         values = ",".join(value_list)
         filter_list.append(string.format(name, compare, values))
+
+    @classmethod
+    def _response_filter(cls, response, arg, value, value_only=None, time_only=None):
+        if len(arg) > 2:
+            logger.error("Too many positional arguments")
+            return {}
+        result = {}
+        for r in response if 'totalResultsReturned' not in response else response['Results']:
+            arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
+            if value_only:
+                result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
+                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+            elif time_only:
+                result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
+                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+            else:
+                result[r['Name']] = {k: v for k, v in r[value].items() if
+                                     (not len(arg) or (len(arg) and k in arg[0]))}
+            if not result[r['Name']]:
+                result.pop(r['Name'], None)
+            elif len(result[r['Name']].values()) == 1:
+                result[r['Name']] = list(result[r['Name']].values())[0]
+        return result
 
     def _parse_filters(self, name, value, not_value, filter_list, case_sensitive):
         compare = "=" if case_sensitive else "~"
@@ -437,31 +465,6 @@ class Fhem:
         if isinstance(response, list):
             for i, v in enumerate(response):
                 self._convert_data(response, i, v)
-
-    def _response_filter(self, response, arg, value, value_only=None, time_only=None):
-        if len(arg) > 2:
-            logger.error("Too many positional arguments")
-            return {}
-        result = {}
-        for r in response if 'totalResultsReturned' not in response else response['Results']:
-            arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
-            if value_only:
-                result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
-                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
-            elif time_only:
-                result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
-                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
-            else:
-                result[r['Name']] = {k: v for k, v in r[value].items() if
-                                     (not len(arg) or (len(arg) and k in arg[0]))}
-            if not result[r['Name']]:
-                result.pop(r['Name'], None)
-            elif len(result[r['Name']].values()) == 1:
-                result[r['Name']] = list(result[r['Name']].values())[0]
-        return result
-
-    def _sand_down(self, value):
-        return value if len(value.values()) - 1 else list(value.values())[0]
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
             nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
