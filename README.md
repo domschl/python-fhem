@@ -57,8 +57,14 @@ import fhem
 fh = fhem.Fhem("myserver.home.org")
 # Send a command to FHEM (this automatically connects() in case of telnet)
 fh.send_cmd("set lamp on")
-# Get a specific reading from a device
-temp = fh.get_dev_reading("LivingThermometer", "temperature")
+# Get temperatur of LivingThermometer
+temp = fh.get_device_reading("LivingThermometer", "temperature")
+# Get a dict of kitchen lights with light on
+lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_only=True)
+# Get all data of specific tvs
+tvs = fh.get(device_type=["LGTV", "STV"])
+# Get indoor thermometers with low battery
+low = fh.get_readings(name=".*Thermometer", nroom="outdoor", filter={"battery!": "ok"})
 ```
 
 To connect via telnet with SSL and password:
