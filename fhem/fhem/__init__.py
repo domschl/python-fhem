@@ -31,7 +31,8 @@ except ImportError:
     from urllib2 import build_opener
     from urllib2 import install_opener
 
-__version__ = '0.5.4'  # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
+# needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
+__version__ = '0.6.0'
 
 # create logger with 'python_fhem'
 logger = logging.getLogger(__name__)
@@ -105,18 +106,22 @@ class Fhem:
                     self.bsock = socket.socket(socket.AF_INET,
                                                socket.SOCK_STREAM)
                     self.sock = ssl.wrap_socket(self.bsock)
-                    logger.info("Connecting to {}:{} with SSL (TLS)".format(self.server, self.port))
+                    logger.info("Connecting to {}:{} with SSL (TLS)".format(
+                        self.server, self.port))
                 else:
                     self.sock = socket.socket(socket.AF_INET,
                                               socket.SOCK_STREAM)
-                    logger.info("Connecting to {}:{} without SSL".format(self.server, self.port))
+                    logger.info("Connecting to {}:{} without SSL".format(
+                        self.server, self.port))
 
                 self.sock.connect((self.server, self.port))
                 self.connection = True
-                logger.info("Connected to {}:{}".format(self.server, self.port))
+                logger.info("Connected to {}:{}".format(
+                    self.server, self.port))
             except socket.error:
                 self.connection = False
-                logger.error("Failed to connect to {}:{}".format(self.server, self.port))
+                logger.error("Failed to connect to {}:{}".format(
+                    self.server, self.port))
                 return
 
             if self.password != "":
@@ -151,9 +156,11 @@ class Fhem:
                         self.csrftoken = token
                         self.connection = True
                     else:
-                        logger.error("CSRF token requested for server that doesn't know CSRF")
+                        logger.error(
+                            "CSRF token requested for server that doesn't know CSRF")
                 else:
-                    logger.error("No valid answer on send when expecting csrf.")
+                    logger.error(
+                        "No valid answer on send when expecting csrf.")
             else:
                 self.connection = True
 
@@ -233,11 +240,13 @@ class Fhem:
                     logger.info("Sent msg, len={}".format(len(buf)))
                     return None
                 except OSError as err:
-                    logger.error("Failed to send msg, len={}. Exception raised: {}".format(len(buf), err))
+                    logger.error(
+                        "Failed to send msg, len={}. Exception raised: {}".format(len(buf), err))
                     self.connection = None
                     return None
             else:
-                logger.error("Failed to send msg, len={}. Not connected.".format(len(buf)))
+                logger.error(
+                    "Failed to send msg, len={}. Not connected.".format(len(buf)))
                 return None
         else:  # HTTP(S)
             paramdata = None
@@ -265,7 +274,8 @@ class Fhem:
                 return data
             except URLError as err:
                 self.connection = False
-                logger.error("Failed to send msg, len={}, {}".format(len(buf), err))
+                logger.error(
+                    "Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
 
     def send_cmd(self, msg):
@@ -283,7 +293,8 @@ class Fhem:
                 cmd = msg.encode('utf-8')
                 return self.send(cmd)
             else:
-                logger.error("Failed to send msg, len={}. Not connected.".format(len(msg)))
+                logger.error(
+                    "Failed to send msg, len={}. Not connected.".format(len(msg)))
                 return None
         else:
             return self.send(msg)
@@ -298,7 +309,8 @@ class Fhem:
             try:
                 data = self.sock.recv(32000)
             except socket.error as err:
-                logger.debug("Exception in non-blocking. Error: {}".format(err))
+                logger.debug(
+                    "Exception in non-blocking. Error: {}".format(err))
                 time.sleep(timeout)
 
             wok = 1
@@ -314,7 +326,8 @@ class Fhem:
                         data += datai
                 except socket.error as err:
                     wok = 0
-                    logger.debug("Exception in non-blocking. Error: {}".format(err))
+                    logger.debug(
+                        "Exception in non-blocking. Error: {}".format(err))
             self.sock.setblocking(True)
         return data
 
@@ -345,7 +358,8 @@ class Fhem:
 
                 self.sock.setblocking(True)
             else:
-                logger.error("Failed to send msg, len={}. Not connected.".format(len(msg)))
+                logger.error(
+                    "Failed to send msg, len={}. Not connected.".format(len(msg)))
         else:
             data = self.send_cmd(msg)
             if data is None:
@@ -358,7 +372,8 @@ class Fhem:
             sdata = data.decode('utf-8')
             jdata = json.loads(sdata)
         except Exception as err:
-            logger.error("Failed to decode json, exception raised. {} {}".format(data, err))
+            logger.error(
+                "Failed to decode json, exception raised. {} {}".format(data, err))
             return {}
         if len(jdata[u'Results']) == 0:
             logger.error("Query had no result.")
@@ -368,19 +383,23 @@ class Fhem:
             return jdata
 
     def get_dev_state(self, dev, timeout=0.1):
-        logger.critical("Deprecation: use get_device('device') instead of get_dev_state")
+        logger.critical(
+            "Deprecation: use get_device('device') instead of get_dev_state")
         return self.get_device(dev, timeout=timeout, deprecated=True)
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
-        logger.critical("Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading")
+        logger.critical(
+            "Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading")
         return self.get_device_reading(dev, reading, value_only=True, timeout=timeout)
 
     def getDevReadings(self, dev, reading, timeout=0.1):
-        logger.critical("Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings")
+        logger.critical(
+            "Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings")
         return self.get_device_reading(dev, timeout=timeout, value_only=True, deprecated=True)
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
-        logger.critical("Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
+        logger.critical(
+            "Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
         return self.get_device_reading(dev, readings, timeout=timeout, value_only=True, deprecated=True)
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
@@ -394,11 +413,13 @@ class Fhem:
         return self.get_device_reading(dev, readings, timeout=timeout, time_only=True)
 
     def getFhemState(self, timeout=0.1):
-        logger.critical("Deprecation: use get() without parameters instead of getFhemState")
+        logger.critical(
+            "Deprecation: use get() without parameters instead of getFhemState")
         return self.get(timeout=timeout, deprecated=True)
 
     def get_fhem_state(self, timeout=0.1):
-        logger.critical("Deprecation: use get() without parameters instead of get_fhem_state")
+        logger.critical(
+            "Deprecation: use get() without parameters instead of get_fhem_state")
         return self.get(timeout=timeout, deprecated=True)
 
     @classmethod
@@ -439,7 +460,8 @@ class Fhem:
         if value:
             self._append_filter(name, value, compare, "{}{}{}", filter_list)
         elif not_value:
-            self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
+            self._append_filter(name, not_value, compare,
+                                "{}!{}{}", filter_list)
 
     def _convert_data(self, response, k, v):
         try:
@@ -452,7 +474,8 @@ class Fhem:
             elif re.findall("^[0-9]+\.[0-9]+$", v):
                 response[k] = float(v)
             elif re.findall("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", v):
-                response[k] = datetime.datetime.strptime(v, '%Y-%m-%d %H:%M:%S')
+                response[k] = datetime.datetime.strptime(
+                    v, '%Y-%m-%d %H:%M:%S')
         if isinstance(v, dict):
             self._parse_data_types(response[k])
         if isinstance(v, list):
@@ -494,14 +517,20 @@ class Fhem:
             self.connect()
         if self.connected():
             filter_list = []
-            self._parse_filters("NAME", name, nname, filter_list, case_sensitive)
-            self._parse_filters("STATE", state, nstate, filter_list, case_sensitive)
-            self._parse_filters("group", group, ngroup, filter_list, case_sensitive)
-            self._parse_filters("room", room, nroom, filter_list, case_sensitive)
-            self._parse_filters("TYPE", device_type, ndevice_type, filter_list, case_sensitive)
+            self._parse_filters("NAME", name, nname,
+                                filter_list, case_sensitive)
+            self._parse_filters("STATE", state, nstate,
+                                filter_list, case_sensitive)
+            self._parse_filters("group", group, ngroup,
+                                filter_list, case_sensitive)
+            self._parse_filters("room", room, nroom,
+                                filter_list, case_sensitive)
+            self._parse_filters("TYPE", device_type,
+                                ndevice_type, filter_list, case_sensitive)
             if filters:
                 for key, value in filters.items():
-                    filter_list.append("{}{}{}".format(key, "=" if case_sensitive else "~", value))
+                    filter_list.append("{}{}{}".format(
+                        key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
             if not result or deprecated:
