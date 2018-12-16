@@ -34,7 +34,7 @@ pip install [-U] -e .
 
 ## History
 
-* 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)), proprietary logging removed. Breaking changes in API.
+* 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)). See [online documentation](https://domschl.github.io/python-fhem/doc/_build/html/index.html), especially the new get() method for details on the new functionality. Proprietary logging functions marked deprecated. 
 * 0.5.5 (2018-08-26): Documentation cleanup, automatic documentation with sphinx.
 * 0.5.3 (2018-08-26): Fix syntax in exception handler
 * 0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
