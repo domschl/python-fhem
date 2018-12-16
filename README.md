@@ -65,7 +65,7 @@ lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_o
 # Get all data of specific tvs
 tvs = fh.get(device_type=["LGTV", "STV"])
 # Get indoor thermometers with low battery
-low = fh.get_readings(name=".*Thermometer", nroom="outdoor", filter={"battery!": "ok"})
+low = fh.get_readings(name=".*Thermometer", not_room="outdoor", filter={"battery!": "ok"})
 ```
 
 To connect via telnet with SSL and password:
