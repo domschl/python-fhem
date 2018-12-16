@@ -8,9 +8,9 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
-## Installation:
+## Installation
 
-### PIP installation (PyPI):
+### PIP installation (PyPI)
 
 See the [PyPI page](https://pypi.python.org/pypi?:action=display&name=fhem) for additional information about the package.
 
@@ -34,6 +34,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)), proprietary logging removed. Breaking changes in API.
 * 0.5.5 (2018-08-26): Documentation cleanup, automatic documentation with sphinx.
 * 0.5.3 (2018-08-26): Fix syntax in exception handler
 * 0.5.2 (2018-06-09): Fix for crash on invalid csrf-return
@@ -51,14 +52,23 @@ pip install [-U] -e .
 Default telnet connection without password and without encryption:
 
 ```python
+import logging
 import fhem
+
+logging.basicConfig()  # Python 2 needs this, or you won't see errors
 
 # Connect via default protocol telnet, default port 7072:
 fh = fhem.Fhem("myserver.home.org")
 # Send a command to FHEM (this automatically connects() in case of telnet)
 fh.send_cmd("set lamp on")
-# Get a specific reading from a device
-temp = fh.get_dev_reading("LivingThermometer", "temperature")
+# Get temperatur of LivingThermometer
+temp = fh.get_device_reading("LivingThermometer", "temperature")
+# Get a dict of kitchen lights with light on
+lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_only=True)
+# Get all data of specific tvs
+tvs = fh.get(device_type=["LGTV", "STV"])
+# Get indoor thermometers with low battery
+low = fh.get_readings(name=".*Thermometer", not_room="outdoor", filter={"battery!": "ok"})
 ```
 
 To connect via telnet with SSL and password:
