@@ -52,7 +52,10 @@ pip install [-U] -e .
 Default telnet connection without password and without encryption:
 
 ```python
+import logging
 import fhem
+
+logging.basicConfig()  # Python 2 needs this, or you won't see errors
 
 # Connect via default protocol telnet, default port 7072:
 fh = fhem.Fhem("myserver.home.org")

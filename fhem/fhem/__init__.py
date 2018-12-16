@@ -56,7 +56,7 @@ class Fhem:
         :param password: (global) telnet or http(s) password
         :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True
         :param cafile: path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.
-        :param loglevel: deprecated. Please use standard python logging API with logger 'Fhem'.
+        :param loglevel: deprecated, will be removed. Please use standard python logging API with logger 'Fhem'.
         '''
         self.log = logging.getLogger("Fhem")
 
@@ -171,7 +171,7 @@ class Fhem:
         return self.connection
 
     def set_loglevel(self, level):
-        '''Set logging level. [Deprecated, use python logging.setLevel]
+        '''Set logging level. [Deprecated, will be removed, use python logging.setLevel]
 
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
@@ -228,7 +228,7 @@ class Fhem:
             self.log.debug("Setting up opener on: {}".format(self.baseurlauth))
             install_opener(self.opener)
 
-    def send(self, buf):
+    def send(self, buf, timeout=10):
         '''Sends a buffer to server
 
         :param buf: binary buffer'''
@@ -273,7 +273,7 @@ class Fhem:
                     ccmd = self.baseurltoken
 
                 self.log.info("Request: {}".format(ccmd))
-                ans = urlopen(ccmd, paramdata)  # , data, 10)  # XXX timeout
+                ans = urlopen(ccmd, paramdata, timeout=timeout)
                 data = ans.read()
                 return data
             except URLError as err:
@@ -281,11 +281,17 @@ class Fhem:
                 self.log.error(
                     "Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
+            except socket.timeout as err:
+                # Python 2.7 fix
+                self.log.error(
+                    "Failed to send msg, len={}, {}".format(len(buf), err))
+                return None
 
-    def send_cmd(self, msg):
+    def send_cmd(self, msg, timeout=10.0):
         '''Sends a command to server.
 
         :param msg: string with FHEM command, e.g. 'set lamp on'
+        :param timeout: timeout on send (sec).
         '''
         if not self.connected():
             self.connect()
@@ -301,7 +307,7 @@ class Fhem:
                     "Failed to send msg, len={}. Not connected.".format(len(msg)))
                 return None
         else:
-            return self.send(msg)
+            return self.send(msg, timeout=timeout)
 
     def _recv_nonblocking(self, timeout=0.1):
         if not self.connected():
@@ -389,7 +395,7 @@ class Fhem:
     def get_dev_state(self, dev, timeout=0.1):
         self.log.warning(
             "Deprecation: use get_device('device') instead of get_dev_state")
-        return self.get_device(dev, timeout=timeout, deprecated=True)
+        return self.get_device(dev, timeout=timeout, raw_result=True)
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
         self.log.warning(
@@ -399,12 +405,12 @@ class Fhem:
     def getDevReadings(self, dev, reading, timeout=0.1):
         self.log.warning(
             "Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings")
-        return self.get_device_reading(dev, timeout=timeout, value_only=True, deprecated=True)
+        return self.get_device_reading(dev, timeout=timeout, value_only=True, raw_result=True)
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
         self.log.warning(
             "Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
-        return self.get_device_reading(dev, readings, timeout=timeout, value_only=True, deprecated=True)
+        return self.get_device_reading(dev, readings, timeout=timeout, value_only=True, raw_result=True)
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         self.log.warning(
@@ -419,12 +425,12 @@ class Fhem:
     def getFhemState(self, timeout=0.1):
         self.log.warning(
             "Deprecation: use get() without parameters instead of getFhemState")
-        return self.get(timeout=timeout, deprecated=True)
+        return self.get(timeout=timeout, raw_result=True)
 
     def get_fhem_state(self, timeout=0.1):
         self.log.warning(
             "Deprecation: use get() without parameters instead of get_fhem_state")
-        return self.get(timeout=timeout, deprecated=True)
+        return self.get(timeout=timeout, raw_result=True)
 
     @staticmethod
     def _sand_down(value):
@@ -493,7 +499,7 @@ class Fhem:
                 self._convert_data(response, i, v)
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
-            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
+            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, raw_result=None):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -512,7 +518,7 @@ class Fhem:
         :param not_device_type: not device_type
         :param case_sensitive: bool, use case_sensitivity for all filter functions
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
-        :param deprecated: Don't convert to python types and send full FHEM response
+        :param raw_result: On True: Don't convert to python types and send full FHEM response
         :param timeout: timeout for reply
         :return: dict of FHEM devices
         """
@@ -536,7 +542,7 @@ class Fhem:
                         key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
-            if not result or deprecated:
+            if not result or raw_result:
                 return result
             result = result['Results']
             self._parse_data_types(result)
@@ -549,7 +555,7 @@ class Fhem:
         """
         Return only device states, can use filters from get().
 
-        :param kwargs: Use keyword arguments from get function
+        :param kwargs: Use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict of FHEM devices with states
         """
         response = self.get(**kwargs)
@@ -564,7 +570,7 @@ class Fhem:
         :param arg: str, Get only a specified reading, return all readings of device when parameter not given
         :param value_only: return only value of reading, not timestamp
         :param time_only: return only timestamp of reading
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict of FHEM devices with readings
         """
         value_only = kwargs['value_only'] if 'value_only' in kwargs else None
@@ -579,7 +585,7 @@ class Fhem:
         Return attributes of a device, can use filters from get()
 
         :param arg: str, Get only specified attribute, return all attributes of device when parameter not given
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict of FHEM devices with attributes
         """
         response = self.get(**kwargs)
@@ -590,7 +596,7 @@ class Fhem:
         Return internals of a device, can use filters from get()
 
         :param arg: str, Get only specified internal, return all internals of device when parameter not given
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict of FHEM devices with internals
         """
         response = self.get(**kwargs)
@@ -601,7 +607,7 @@ class Fhem:
         Get all data from a device
 
         :param device: str or list,
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict with data of specific FHEM device
         """
         return self.get(name=device, **kwargs)
@@ -611,7 +617,7 @@ class Fhem:
         Get state of one device
 
         :param device: str or list,
-        :param kwargs: use keyword arguments from get and get_states functions
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` and :py:meth:`Fhem.get_states` functions
         :return: str, int, float when only specific value requested else dict
         """
         result = self.get_states(name=device, **kwargs)
@@ -623,7 +629,7 @@ class Fhem:
 
         :param device: str or list,
         :param arg: str for one reading, list for special readings, empty for all readings
-        :param kwargs: use keyword arguments from get and get_readings functions
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` and :py:meth:`Fhem.get_readings` functions
         :return: str, int, float when only specific value requested else dict
         """
         result = self.get_readings(*arg, name=device, **kwargs)
@@ -635,7 +641,7 @@ class Fhem:
 
         :param device: str or list,
         :param arg: str for one attribute, list for special attributes, empty for all attributes
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: str, int, float when only specific value requested else dict
         """
         result = self.get_attributes(*arg, name=device, **kwargs)
@@ -647,7 +653,7 @@ class Fhem:
 
         :param device: str or list,
         :param arg: str for one internal value, list for special internal values, empty for all internal values
-        :param kwargs: use keyword arguments from get function
+        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: str, int, float when only specific value requested else dict
         """
         result = self.get_internals(*arg, name=device, **kwargs)
@@ -678,7 +684,7 @@ class FhemEventQueue:
         :param timeout: internal timeout for socket receive (should be short)
         :param eventtimeout: larger timeout for server keep-alive messages
         :param serverregex: FHEM regex to restrict event messages on server side.
-        :param loglevel: deprected. Use standard python logging function for logger 'FhemEventQueue', old: 0: no log, 1: errors, 2: info, 3: debug
+        :param loglevel: deprecated, will be removed. Use standard python logging function for logger 'FhemEventQueue', old: 0: no log, 1: errors, 2: info, 3: debug
         '''
         # self.set_loglevel(loglevel)
         self.log = logging.getLogger('FhemEventQueue')
@@ -699,7 +705,7 @@ class FhemEventQueue:
 
     def set_loglevel(self, level):
         '''
-        Set logging level, [Deprecated, use python's logging.setLevel]
+        Set logging level, [Deprecated, will be removed, use python's logging.setLevel]
 
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
