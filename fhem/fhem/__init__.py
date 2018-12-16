@@ -273,7 +273,12 @@ class Fhem:
                     ccmd = self.baseurltoken
 
                 self.log.info("Request: {}".format(ccmd))
-                ans = urlopen(ccmd, paramdata, timeout=timeout)
+                if ccmd.lower().startswith('http'):
+                    ans = urlopen(ccmd, paramdata, timeout=timeout)
+                else:
+                    self.log.error(
+                        "Invalid URL {}, Failed to send msg, len={}, {}".format(ccmd, len(buf), err))
+                    return None
                 data = ans.read()
                 return data
             except URLError as err:
