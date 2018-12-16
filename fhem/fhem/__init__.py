@@ -426,17 +426,17 @@ class Fhem:
             "Deprecation: use get() without parameters instead of get_fhem_state")
         return self.get(timeout=timeout, deprecated=True)
 
-    @classmethod
-    def _sand_down(cls, value):
+    @staticmethod
+    def _sand_down(value):
         return value if len(value.values()) - 1 else list(value.values())[0]
 
-    @classmethod
-    def _append_filter(cls, name, value, compare, string, filter_list):
+    @staticmethod
+    def _append_filter(name, value, compare, string, filter_list):
         value_list = [value] if isinstance(value, str) else value
         values = ",".join(value_list)
         filter_list.append(string.format(name, compare, values))
 
-    def _response_filter(self, cls, response, arg, value, value_only=None, time_only=None):
+    def _response_filter(self, response, arg, value, value_only=None, time_only=None):
         if len(arg) > 2:
             self.log.error("Too many positional arguments")
             return {}
@@ -492,8 +492,8 @@ class Fhem:
             for i, v in enumerate(response):
                 self._convert_data(response, i, v)
 
-    def get(self, name=None, state=None, group=None, room=None, device_type=None, nname=None, nstate=None, ngroup=None,
-            nroom=None, ndevice_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
+    def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
+            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, deprecated=None):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -505,11 +505,11 @@ class Fhem:
         :param group: str or list, filter FHEM groups
         :param room: str or list, filter FHEM room
         :param device_type: str or list, FHEM device type
-        :param nname: not name
-        :param nstate: not state
-        :param ngroup: not group
-        :param nroom: not room
-        :param ndevice_type: not device_type
+        :param not_name: not name
+        :param not_state: not state
+        :param not_group: not group
+        :param not_room: not room
+        :param not_device_type: not device_type
         :param case_sensitive: bool, use case_sensitivity for all filter functions
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
         :param deprecated: Don't convert to python types and send full FHEM response
@@ -520,16 +520,16 @@ class Fhem:
             self.connect()
         if self.connected():
             filter_list = []
-            self._parse_filters("NAME", name, nname,
+            self._parse_filters("NAME", name, not_name,
                                 filter_list, case_sensitive)
-            self._parse_filters("STATE", state, nstate,
+            self._parse_filters("STATE", state, not_state,
                                 filter_list, case_sensitive)
-            self._parse_filters("group", group, ngroup,
+            self._parse_filters("group", group, not_group,
                                 filter_list, case_sensitive)
-            self._parse_filters("room", room, nroom,
+            self._parse_filters("room", room, not_room,
                                 filter_list, case_sensitive)
             self._parse_filters("TYPE", device_type,
-                                ndevice_type, filter_list, case_sensitive)
+                                not_device_type, filter_list, case_sensitive)
             if filters:
                 for key, value in filters.items():
                     filter_list.append("{}{}{}".format(
