@@ -13,6 +13,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -59,7 +60,7 @@ support</p>
 <li><strong>password</strong> – (global) telnet or http(s) password</li>
 <li><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True</li>
 <li><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</li>
-<li><strong>loglevel</strong> – 0: critical, 1: errors, 2: info, 3: debug</li>
+<li><strong>loglevel</strong> – deprecated, will be removed. Please use standard python logging API with logger ‘Fhem’.</li>
 </ul>
 </td>
 </tr>
@@ -92,18 +93,35 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_dev_reading">
-<code class="descname">get_dev_reading</code><span class="sig-paren">(</span><em>dev</em>, <em>reading</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_reading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_reading" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a specific reading from a FHEM device</p>
+<dt id="__init__.Fhem.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>name=None</em>, <em>state=None</em>, <em>group=None</em>, <em>room=None</em>, <em>device_type=None</em>, <em>not_name=None</em>, <em>not_state=None</em>, <em>not_group=None</em>, <em>not_room=None</em>, <em>not_device_type=None</em>, <em>case_sensitive=None</em>, <em>filters=None</em>, <em>timeout=0.1</em>, <em>raw_result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get FHEM data of devices, can filter by parameters or custom defined filters.
+All filters use regular expressions (except full match), so don’t forget escaping.
+Filters can be used by all other get functions.
+For more information about filters, see <a class="reference external" href="https://FHEM.de/commandref.html#devspec">https://FHEM.de/commandref.html#devspec</a></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dev</strong> – FHEM device</li>
-<li><strong>reading</strong> – name of FHEM reading</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> – str or list, device name in FHEM</li>
+<li><strong>state</strong> – str or list, state in FHEM</li>
+<li><strong>group</strong> – str or list, filter FHEM groups</li>
+<li><strong>room</strong> – str or list, filter FHEM room</li>
+<li><strong>device_type</strong> – str or list, FHEM device type</li>
+<li><strong>not_name</strong> – not name</li>
+<li><strong>not_state</strong> – not state</li>
+<li><strong>not_group</strong> – not group</li>
+<li><strong>not_room</strong> – not room</li>
+<li><strong>not_device_type</strong> – not device_type</li>
+<li><strong>case_sensitive</strong> – bool, use case_sensitivity for all filter functions</li>
+<li><strong>filters</strong> – dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {“battery”: “ok”}</li>
+<li><strong>raw_result</strong> – On True: Don’t convert to python types and send full FHEM response</li>
 <li><strong>timeout</strong> – timeout for reply</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices</p>
 </td>
 </tr>
 </tbody>
@@ -111,18 +129,20 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_dev_reading_time">
-<code class="descname">get_dev_reading_time</code><span class="sig-paren">(</span><em>dev</em>, <em>reading</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_reading_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_reading_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the datetime of a specific reading from a FHEM device</p>
+<dt id="__init__.Fhem.get_attributes">
+<code class="descname">get_attributes</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return attributes of a device, can use filters from get()</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dev</strong> – FHEM device</li>
-<li><strong>reading</strong> – name of FHEM reading</li>
-<li><strong>timeout</strong> – timeout for reply</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arg</strong> – str, Get only specified attribute, return all attributes of device when parameter not given</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with attributes</p>
 </td>
 </tr>
 </tbody>
@@ -130,18 +150,20 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_dev_readings">
-<code class="descname">get_dev_readings</code><span class="sig-paren">(</span><em>dev</em>, <em>readings</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_readings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_readings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of readings for one FHEM device</p>
+<dt id="__init__.Fhem.get_device">
+<code class="descname">get_device</code><span class="sig-paren">(</span><em>device</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all data from a device</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dev</strong> – FHEM device</li>
-<li><strong>readings</strong> – array of FHEM reading names</li>
-<li><strong>timeout</strong> – timeout for reply</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>device</strong> – str or list,</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict with data of specific FHEM device</p>
 </td>
 </tr>
 </tbody>
@@ -149,18 +171,21 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_dev_readings_time">
-<code class="descname">get_dev_readings_time</code><span class="sig-paren">(</span><em>dev</em>, <em>readings</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_readings_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_readings_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of datetimes of readings for one FHEM device</p>
+<dt id="__init__.Fhem.get_device_attribute">
+<code class="descname">get_device_attribute</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get attribute(s) of one device</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dev</strong> – FHEM device</li>
-<li><strong>readings</strong> – array of FHEM reading names</li>
-<li><strong>timeout</strong> – timeout for reply</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>device</strong> – str or list,</li>
+<li><strong>arg</strong> – str for one attribute, list for special attributes, empty for all attributes</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
 </td>
 </tr>
 </tbody>
@@ -168,17 +193,21 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_dev_state">
-<code class="descname">get_dev_state</code><span class="sig-paren">(</span><em>dev</em>, <em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_dev_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_dev_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get all FHEM device properties as JSON object</p>
+<dt id="__init__.Fhem.get_device_internal">
+<code class="descname">get_device_internal</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_internal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_internal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get internal(s) of one device</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dev</strong> – FHEM device name</li>
-<li><strong>timeout</strong> – timeout for reply</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>device</strong> – str or list,</li>
+<li><strong>arg</strong> – str for one internal value, list for special internal values, empty for all internal values</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
 </td>
 </tr>
 </tbody>
@@ -186,15 +215,103 @@ support</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="__init__.Fhem.get_fhem_state">
-<code class="descname">get_fhem_state</code><span class="sig-paren">(</span><em>timeout=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_fhem_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_fhem_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get FHEM state of all devices, returns a large JSON object with
-every single FHEM device and reading state</p>
+<dt id="__init__.Fhem.get_device_reading">
+<code class="descname">get_device_reading</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_reading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_reading" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get reading(s) of one device</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> – timeout for reply</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>device</strong> – str or list,</li>
+<li><strong>arg</strong> – str for one reading, list for special readings, empty for all readings</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_readings" title="__init__.Fhem.get_readings"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_readings()</span></code></a> functions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_device_state">
+<code class="descname">get_device_state</code><span class="sig-paren">(</span><em>device</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get state of one device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>device</strong> – str or list,</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_states" title="__init__.Fhem.get_states"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_states()</span></code></a> functions</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_internals">
+<code class="descname">get_internals</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_internals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_internals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return internals of a device, can use filters from get()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arg</strong> – str, Get only specified internal, return all internals of device when parameter not given</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with internals</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_readings">
+<code class="descname">get_readings</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_readings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_readings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return readings of a device, can use filters from get().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arg</strong> – str, Get only a specified reading, return all readings of device when parameter not given</li>
+<li><strong>value_only</strong> – return only value of reading, not timestamp</li>
+<li><strong>time_only</strong> – return only timestamp of reading</li>
+<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with readings</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="__init__.Fhem.get_states">
+<code class="descname">get_states</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return only device states, can use filters from get().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> – Use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict of FHEM devices with states</td>
 </tr>
 </tbody>
 </table>
@@ -202,7 +319,7 @@ every single FHEM device and reading state</p>
 
 <dl class="method">
 <dt id="__init__.Fhem.send">
-<code class="descname">send</code><span class="sig-paren">(</span><em>buf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>buf</em>, <em>timeout=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a buffer to server</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -216,13 +333,17 @@ every single FHEM device and reading state</p>
 
 <dl class="method">
 <dt id="__init__.Fhem.send_cmd">
-<code class="descname">send_cmd</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_cmd</code><span class="sig-paren">(</span><em>msg</em>, <em>timeout=10.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a command to server.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> – string with FHEM command, e.g. ‘set lamp on’</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>msg</strong> – string with FHEM command, e.g. ‘set lamp on’</li>
+<li><strong>timeout</strong> – timeout on send (sec).</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -250,7 +371,7 @@ every single FHEM device and reading state</p>
 <dl class="method">
 <dt id="__init__.Fhem.set_loglevel">
 <code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.set_loglevel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set logging level.</p>
+<dd><p>Set logging level. [Deprecated, will be removed, use python logging.setLevel]</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -293,7 +414,7 @@ a Python queue.</p>
 <li><strong>timeout</strong> – internal timeout for socket receive (should be short)</li>
 <li><strong>eventtimeout</strong> – larger timeout for server keep-alive messages</li>
 <li><strong>serverregex</strong> – FHEM regex to restrict event messages on server side.</li>
-<li><strong>loglevel</strong> – 0: no log, 1: errors, 2: info, 3: debug</li>
+<li><strong>loglevel</strong> – deprecated, will be removed. Use standard python logging function for logger ‘FhemEventQueue’, old: 0: no log, 1: errors, 2: info, 3: debug</li>
 </ul>
 </td>
 </tr>
@@ -316,7 +437,7 @@ a Python queue.</p>
 <dl class="method">
 <dt id="__init__.FhemEventQueue.set_loglevel">
 <code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.set_loglevel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set logging level,</p>
+<dd><p>Set logging level, [Deprecated, will be removed, use python’s logging.setLevel]</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -385,7 +506,7 @@ a Python queue.</p>
       &copy;2018, Dominik Schlösser.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |

@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
    
@@ -33,13 +34,15 @@
             
   <h1>Source code for __init__</h1><div class="highlight"><pre>
 <span></span><span class="sd">&#39;&#39;&#39;API for FHEM homeautomation server, supporting telnet or HTTP/HTTPS connections with authentication and CSRF-token support.&#39;&#39;&#39;</span>
-<span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">ssl</span>
 <span class="kn">import</span> <span class="nn">threading</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># Python 3.x</span>
     <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">quote</span>
@@ -63,17 +66,17 @@
     <span class="kn">from</span> <span class="nn">urllib2</span> <span class="k">import</span> <span class="n">build_opener</span>
     <span class="kn">from</span> <span class="nn">urllib2</span> <span class="k">import</span> <span class="n">install_opener</span>
 
-
-<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.5.4&#39;</span>   <span class="c1"># needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)</span>
+<span class="c1"># needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.6.0&#39;</span>
 
 <span class="c1"># create logger with &#39;python_fhem&#39;</span>
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="c1"># logger = logging.getLogger(__name__)</span>
 
 
 <div class="viewcode-block" id="Fhem"><a class="viewcode-back" href="../index.html#__init__.Fhem">[docs]</a><span class="k">class</span> <span class="nc">Fhem</span><span class="p">:</span>
-
     <span class="sd">&#39;&#39;&#39;Connects to FHEM via socket communication with optional SSL and password</span>
 <span class="sd">    support&#39;&#39;&#39;</span>
+
 <div class="viewcode-block" id="Fhem.__init__"><a class="viewcode-back" href="../index.html#__init__.Fhem.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7072</span><span class="p">,</span>
                  <span class="n">use_ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;telnet&quot;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">csrf</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">cafile</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
@@ -88,8 +91,10 @@
 <span class="sd">        :param password: (global) telnet or http(s) password</span>
 <span class="sd">        :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True</span>
 <span class="sd">        :param cafile: path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</span>
-<span class="sd">        :param loglevel: 0: critical, 1: errors, 2: info, 3: debug</span>
+<span class="sd">        :param loglevel: deprecated, will be removed. Please use standard python logging API with logger &#39;Fhem&#39;.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;Fhem&quot;</span><span class="p">)</span>
+
         <span class="n">validprots</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;http&#39;</span><span class="p">,</span> <span class="s1">&#39;https&#39;</span><span class="p">,</span> <span class="s1">&#39;telnet&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
@@ -107,13 +112,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">https_handler</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Set LogLevel</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_loglevel</span><span class="p">(</span><span class="n">loglevel</span><span class="p">)</span>
+        <span class="c1"># self.set_loglevel(loglevel)</span>
 
         <span class="c1"># Check if protocol is supported</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="ow">in</span> <span class="n">validprots</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid protocol: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">protocol</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid protocol: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">protocol</span><span class="p">))</span>
 
         <span class="c1"># Set authenticication values if#</span>
         <span class="c1"># the protocol is http(s) or use_ssl is True</span>
@@ -129,28 +134,31 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_install_opener</span><span class="p">()</span></div>
 
-
 <div class="viewcode-block" id="Fhem.connect"><a class="viewcode-back" href="../index.html#__init__.Fhem.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;create socket connection to server (telnet protocol only)&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating socket...&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating socket...&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ssl</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">bsock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span>
                                                <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bsock</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connecting to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2"> with SSL (TLS)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connecting to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2"> with SSL (TLS)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span>
                                               <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connecting to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2"> without SSL&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connecting to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2"> without SSL&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connected to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Connected to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to connect to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to connect to </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
                 <span class="k">return</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
@@ -158,7 +166,7 @@
                 <span class="c1"># self.send_cmd(&quot;\n&quot;)</span>
                 <span class="c1"># prmpt = self._recv_nonblocking(4.0)</span>
                 <span class="n">prmpt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;auth-prompt: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prmpt</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;auth-prompt: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prmpt</span><span class="p">))</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">nolog</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
@@ -167,17 +175,17 @@
 
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">po1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;auth-repl1: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">po1</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;auth-repl1: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">po1</span><span class="p">))</span>
                 <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to recv auth reply&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to recv auth reply&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">return</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Auth password sent to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Auth password sent to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># http(s)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">csrf</span><span class="p">:</span>
                 <span class="n">dat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">dat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">dat</span><span class="o">=</span><span class="n">dat</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">)</span>
+                    <span class="n">dat</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">)</span>
                     <span class="n">stp</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;csrf_&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">stp</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                         <span class="n">token</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[</span><span class="n">stp</span><span class="p">:]</span>
@@ -185,32 +193,33 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">csrftoken</span> <span class="o">=</span> <span class="n">token</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">True</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;CSRF token requested for server that doesn&#39;t know CSRF&quot;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s2">&quot;CSRF token requested for server that doesn&#39;t know CSRF&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No valid answer on send when expecting csrf.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">&quot;No valid answer on send when expecting csrf.&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">True</span></div>
-
 
 <div class="viewcode-block" id="Fhem.connected"><a class="viewcode-back" href="../index.html#__init__.Fhem.connected">[docs]</a>    <span class="k">def</span> <span class="nf">connected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns True if socket/http(s) session is connected to server.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span></div>
 
-
 <div class="viewcode-block" id="Fhem.set_loglevel"><a class="viewcode-back" href="../index.html#__init__.Fhem.set_loglevel">[docs]</a>    <span class="k">def</span> <span class="nf">set_loglevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Set logging level.</span>
+        <span class="sd">&#39;&#39;&#39;Set logging level. [Deprecated, will be removed, use python logging.setLevel]</span>
 
 <span class="sd">        :param level: 0: critical, 1: errors, 2: info, 3: debug</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: please set logging levels using python&#39;s standard logging for logger &#39;Fhem&#39;&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Fhem.close"><a class="viewcode-back" href="../index.html#__init__.Fhem.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Closes socket connection. (telnet only)&#39;&#39;&#39;</span>
@@ -219,12 +228,11 @@
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Disconnected from fhem-server&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Disconnected from fhem-server&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Cannot disconnect, not connected&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Cannot disconnect, not connected&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span></div>
-
 
     <span class="k">def</span> <span class="nf">_install_opener</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opener</span> <span class="o">=</span> <span class="kc">None</span>
@@ -252,82 +260,94 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">opener</span> <span class="o">=</span> <span class="n">build_opener</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_handler</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opener</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Setting up opener on: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseurlauth</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Setting up opener on: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseurlauth</span><span class="p">))</span>
             <span class="n">install_opener</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opener</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="Fhem.send"><a class="viewcode-back" href="../index.html#__init__.Fhem.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">):</span>
+<div class="viewcode-block" id="Fhem.send"><a class="viewcode-back" href="../index.html#__init__.Fhem.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sends a buffer to server</span>
 
 <span class="sd">        :param buf: binary buffer&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Not connected, trying to connect...&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Not connected, trying to connect...&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Connected, sending...&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Connected, sending...&quot;</span><span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sent msg, len=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sent msg, len=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span>
                     <span class="k">return</span> <span class="kc">None</span>
                 <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Exception raised: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Exception raised: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">return</span> <span class="kc">None</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span>
                 <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># HTTP(S)</span>
             <span class="n">paramdata</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">csrf</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">csrftoken</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;CSRF token not available!&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;CSRF token not available!&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">datas</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fwcsrf&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">csrftoken</span><span class="p">}</span>
                     <span class="n">paramdata</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cmd: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cmd: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span>
                 <span class="n">cmd</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cmd-enc: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cmd-enc: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
 
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">ccmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseurl</span> <span class="o">+</span> <span class="n">cmd</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">ccmd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseurltoken</span>
 
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Request: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ccmd</span><span class="p">))</span>
-                <span class="n">ans</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">ccmd</span><span class="p">,</span> <span class="n">paramdata</span><span class="p">)</span> <span class="c1"># , data, 10)  # XXX timeout</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Request: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ccmd</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">ccmd</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http&#39;</span><span class="p">):</span>
+                    <span class="n">ans</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">ccmd</span><span class="p">,</span> <span class="n">paramdata</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">&quot;Invalid URL </span><span class="si">{}</span><span class="s2">, Failed to send msg, len=</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ccmd</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="kc">None</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">data</span>
             <span class="k">except</span> <span class="n">URLError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">=</span><span class="kc">False</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="c1"># Python 2.7 fix</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">err</span><span class="p">))</span>
                 <span class="k">return</span> <span class="kc">None</span></div>
 
-
-<div class="viewcode-block" id="Fhem.send_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="Fhem.send_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">10.0</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sends a command to server.</span>
 
 <span class="sd">        :param msg: string with FHEM command, e.g. &#39;set lamp on&#39;</span>
+<span class="sd">        :param timeout: timeout on send (sec).</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">nolog</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">cmd</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)))</span>
                 <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
-
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_recv_nonblocking</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
@@ -339,7 +359,8 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
 
             <span class="n">wok</span> <span class="o">=</span> <span class="mi">1</span>
@@ -355,10 +376,10 @@
                         <span class="n">data</span> <span class="o">+=</span> <span class="n">datai</span>
                 <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                     <span class="n">wok</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
-
 
 <div class="viewcode-block" id="Fhem.send_recv_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_recv_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_recv_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
@@ -380,14 +401,15 @@
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
                     <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to recv msg. </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to recv msg. </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
                         <span class="k">return</span> <span class="p">{}</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_nonblocking</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to send msg, len=</span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">msg</span><span class="p">)))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -400,157 +422,289 @@
             <span class="n">sdata</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
             <span class="n">jdata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">sdata</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to decode json, exception raised. </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Failed to decode json, exception raised. </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
             <span class="k">return</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">jdata</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Results&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Query had no result.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Query had no result.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">{}</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;JSON answer received.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;JSON answer received.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">jdata</span></div>
 
+    <span class="k">def</span> <span class="nf">get_dev_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device(&#39;device&#39;) instead of get_dev_state&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Fhem.get_dev_state"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get all FHEM device properties as JSON object</span>
-
-<span class="sd">        :param dev: FHEM device name</span>
-<span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span><span class="s2">&quot;jsonlist2 </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to get dev state for </span><span class="si">{}</span><span class="s2">. Not connected.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">))</span>
-            <span class="k">return</span> <span class="p">{}</span></div>
-
-
-<div class="viewcode-block" id="Fhem.get_dev_reading"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_reading">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_reading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get a specific reading from a FHEM device</span>
-
-<span class="sd">        :param dev: FHEM device</span>
-<span class="sd">        :param reading: name of FHEM reading</span>
-<span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">read</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dev_state</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="p">{}:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">read</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;Readings&#39;</span><span class="p">][</span><span class="n">reading</span><span class="p">][</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Reading not defined: </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">read</span>
-        <span class="k">return</span> <span class="n">read</span></div>
-
+    <span class="k">def</span> <span class="nf">get_dev_reading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device_reading(&#39;device&#39;, &#39;reading&#39;) instead of get_dev_reading&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device_reading</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">value_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">getDevReadings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Deprecation: use get_dev_readings instead of getDevReadings&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_dev_readings</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device_reading(&#39;device&#39;, [&#39;reading&#39;]) instead of getDevReadings&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device_reading</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">value_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_dev_readings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device_reading(&#39;device&#39;, [&#39;reading&#39;]) instead of get_dev_readings&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device_reading</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">value_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Fhem.get_dev_readings"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_readings">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_readings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get a list of readings for one FHEM device</span>
+    <span class="k">def</span> <span class="nf">get_dev_reading_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device_reading(&#39;device&#39;, &#39;reading&#39;, time_only=True) instead of get_dev_reading_time&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device_reading</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">time_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="sd">        :param dev: FHEM device</span>
-<span class="sd">        :param readings: array of FHEM reading names</span>
-<span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">reads</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dev_state</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="p">{}:</span>
-            <span class="k">return</span> <span class="n">reads</span>
-        <span class="k">for</span> <span class="n">reading</span> <span class="ow">in</span> <span class="n">readings</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rr1</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">reads</span><span class="p">[</span><span class="n">reading</span><span class="p">]</span> <span class="o">=</span> <span class="n">rr1</span><span class="p">[</span><span class="s1">&#39;Readings&#39;</span><span class="p">][</span><span class="n">reading</span><span class="p">][</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Reading not defined: </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">reads</span></div>
-
-
-<div class="viewcode-block" id="Fhem.get_dev_reading_time"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_reading_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_reading_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get the datetime of a specific reading from a FHEM device</span>
-
-<span class="sd">        :param dev: FHEM device</span>
-<span class="sd">        :param reading: name of FHEM reading</span>
-<span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">read</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dev_state</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="p">{}:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">read</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;Readings&#39;</span><span class="p">][</span><span class="n">reading</span><span class="p">][</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Reading not defined: </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">read</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid time format: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="n">time</span></div>
-
-
-<div class="viewcode-block" id="Fhem.get_dev_readings_time"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_dev_readings_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_readings_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get a list of datetimes of readings for one FHEM device</span>
-
-<span class="sd">        :param dev: FHEM device</span>
-<span class="sd">        :param readings: array of FHEM reading names</span>
-<span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">reads</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dev_state</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="p">{}:</span>
-            <span class="k">return</span> <span class="n">reads</span>
-        <span class="k">for</span> <span class="n">reading</span> <span class="ow">in</span> <span class="n">readings</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">rr1</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">read</span> <span class="o">=</span> <span class="n">rr1</span><span class="p">[</span><span class="s1">&#39;Readings&#39;</span><span class="p">][</span><span class="n">reading</span><span class="p">][</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">read_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">read</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
-                    <span class="n">reads</span><span class="p">[</span><span class="n">reading</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_time</span>
-                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid time format: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Reading not defined: </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">reading</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">reads</span></div>
-
+    <span class="k">def</span> <span class="nf">get_dev_readings_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get_device_reading(&#39;device&#39;, [&#39;reading&#39;], time_only=True) instead of get_dev_reading_time&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_device_reading</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">readings</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">time_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">getFhemState</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Deprecation: use get_fhem_state instead of getFhemState&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_fhem_state</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get() without parameters instead of getFhemState&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_fhem_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: use get() without parameters instead of get_fhem_state&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Fhem.get_fhem_state"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_fhem_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_fhem_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get FHEM state of all devices, returns a large JSON object with</span>
-<span class="sd">        every single FHEM device and reading state</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_sand_down</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_append_filter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">filter_list</span><span class="p">):</span>
+        <span class="n">value_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value_list</span><span class="p">)</span>
+        <span class="n">filter_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span> <span class="n">values</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_response_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">value_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">time_only</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Too many positional arguments&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">response</span> <span class="k">if</span> <span class="s1">&#39;totalResultsReturned&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span> <span class="k">else</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">]:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">arg</span>
+            <span class="k">if</span> <span class="n">value_only</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
+                                     <span class="s1">&#39;Value&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+            <span class="k">elif</span> <span class="n">time_only</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
+                                     <span class="s1">&#39;Time&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
+                                     <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_parse_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">not_value</span><span class="p">,</span> <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">):</span>
+        <span class="n">compare</span> <span class="o">=</span> <span class="s2">&quot;=&quot;</span> <span class="k">if</span> <span class="n">case_sensitive</span> <span class="k">else</span> <span class="s2">&quot;~&quot;</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_append_filter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}{}{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filter_list</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">not_value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_append_filter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">not_value</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span>
+                                <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">!</span><span class="si">{}{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filter_list</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_convert_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">test_type</span> <span class="o">=</span> <span class="n">unicode</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="n">test_type</span> <span class="o">=</span> <span class="nb">str</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">test_type</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;^[0-9]+$&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                <span class="n">response</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[0-9]+\.[0-9]+$&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                <span class="n">response</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;^[0-9]</span><span class="si">{4}</span><span class="s2">-[0-9]</span><span class="si">{2}</span><span class="s2">-[0-9]</span><span class="si">{2}</span><span class="s2"> [0-9]</span><span class="si">{2}</span><span class="s2">:[0-9]</span><span class="si">{2}</span><span class="s2">:[0-9]</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                <span class="n">response</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                    <span class="n">v</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_data_types</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_data_types</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_parse_data_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_convert_data</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_convert_data</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Fhem.get"><a class="viewcode-back" href="../index.html#__init__.Fhem.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">room</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">not_room</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get FHEM data of devices, can filter by parameters or custom defined filters.</span>
+<span class="sd">        All filters use regular expressions (except full match), so don&#39;t forget escaping.</span>
+<span class="sd">        Filters can be used by all other get functions.</span>
+<span class="sd">        For more information about filters, see https://FHEM.de/commandref.html#devspec</span>
+
+<span class="sd">        :param name: str or list, device name in FHEM</span>
+<span class="sd">        :param state: str or list, state in FHEM</span>
+<span class="sd">        :param group: str or list, filter FHEM groups</span>
+<span class="sd">        :param room: str or list, filter FHEM room</span>
+<span class="sd">        :param device_type: str or list, FHEM device type</span>
+<span class="sd">        :param not_name: not name</span>
+<span class="sd">        :param not_state: not state</span>
+<span class="sd">        :param not_group: not group</span>
+<span class="sd">        :param not_room: not room</span>
+<span class="sd">        :param not_device_type: not device_type</span>
+<span class="sd">        :param case_sensitive: bool, use case_sensitivity for all filter functions</span>
+<span class="sd">        :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {&quot;battery&quot;: &quot;ok&quot;}</span>
+<span class="sd">        :param raw_result: On True: Don&#39;t convert to python types and send full FHEM response</span>
 <span class="sd">        :param timeout: timeout for reply</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">        :return: dict of FHEM devices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span><span class="s2">&quot;jsonlist2&quot;</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                      <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="n">filter_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filters</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">not_name</span><span class="p">,</span>
+                                <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filters</span><span class="p">(</span><span class="s2">&quot;STATE&quot;</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">not_state</span><span class="p">,</span>
+                                <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filters</span><span class="p">(</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">not_group</span><span class="p">,</span>
+                                <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filters</span><span class="p">(</span><span class="s2">&quot;room&quot;</span><span class="p">,</span> <span class="n">room</span><span class="p">,</span> <span class="n">not_room</span><span class="p">,</span>
+                                <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filters</span><span class="p">(</span><span class="s2">&quot;TYPE&quot;</span><span class="p">,</span> <span class="n">device_type</span><span class="p">,</span>
+                                <span class="n">not_device_type</span><span class="p">,</span> <span class="n">filter_list</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">filters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">filter_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span> <span class="k">if</span> <span class="n">case_sensitive</span> <span class="k">else</span> <span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;jsonlist2 </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;:FILTER=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filter_list</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="n">raw_result</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_data_types</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to get fhem state. Not connected.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">{}</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to get fhem state. Not connected.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{}</span></div>
+
+<div class="viewcode-block" id="Fhem.get_states"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_states">[docs]</a>    <span class="k">def</span> <span class="nf">get_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return only device states, can use filters from get().</span>
+
+<span class="sd">        :param kwargs: Use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: dict of FHEM devices with states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;Readings&#39;</span><span class="p">][</span><span class="s1">&#39;state&#39;</span><span class="p">][</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">response</span> <span class="k">if</span> <span class="s1">&#39;state&#39;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;Readings&#39;</span><span class="p">]}</span></div>
+
+<div class="viewcode-block" id="Fhem.get_readings"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_readings">[docs]</a>    <span class="k">def</span> <span class="nf">get_readings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return readings of a device, can use filters from get().</span>
+
+<span class="sd">        :param arg: str, Get only a specified reading, return all readings of device when parameter not given</span>
+<span class="sd">        :param value_only: return only value of reading, not timestamp</span>
+<span class="sd">        :param time_only: return only timestamp of reading</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: dict of FHEM devices with readings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value_only</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;value_only&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;value_only&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">time_only</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;time_only&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;time_only&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;value_only&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;time_only&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_filter</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="s1">&#39;Readings&#39;</span><span class="p">,</span> <span class="n">value_only</span><span class="o">=</span><span class="n">value_only</span><span class="p">,</span> <span class="n">time_only</span><span class="o">=</span><span class="n">time_only</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_attributes"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">get_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return attributes of a device, can use filters from get()</span>
+
+<span class="sd">        :param arg: str, Get only specified attribute, return all attributes of device when parameter not given</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: dict of FHEM devices with attributes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_filter</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="s1">&#39;Attributes&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_internals"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_internals">[docs]</a>    <span class="k">def</span> <span class="nf">get_internals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return internals of a device, can use filters from get()</span>
+
+<span class="sd">        :param arg: str, Get only specified internal, return all internals of device when parameter not given</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: dict of FHEM devices with internals</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_filter</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="s1">&#39;Internals&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_device"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_device">[docs]</a>    <span class="k">def</span> <span class="nf">get_device</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get all data from a device</span>
+
+<span class="sd">        :param device: str or list,</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: dict with data of specific FHEM device</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_device_state"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_device_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_device_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get state of one device</span>
+
+<span class="sd">        :param device: str or list,</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` and :py:meth:`Fhem.get_states` functions</span>
+<span class="sd">        :return: str, int, float when only specific value requested else dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_states</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sand_down</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_device_reading"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_device_reading">[docs]</a>    <span class="k">def</span> <span class="nf">get_device_reading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get reading(s) of one device</span>
+
+<span class="sd">        :param device: str or list,</span>
+<span class="sd">        :param arg: str for one reading, list for special readings, empty for all readings</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` and :py:meth:`Fhem.get_readings` functions</span>
+<span class="sd">        :return: str, int, float when only specific value requested else dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_readings</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sand_down</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_device_attribute"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_device_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">get_device_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get attribute(s) of one device</span>
+
+<span class="sd">        :param device: str or list,</span>
+<span class="sd">        :param arg: str for one attribute, list for special attributes, empty for all attributes</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: str, int, float when only specific value requested else dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attributes</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sand_down</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Fhem.get_device_internal"><a class="viewcode-back" href="../index.html#__init__.Fhem.get_device_internal">[docs]</a>    <span class="k">def</span> <span class="nf">get_device_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get internal(s) of one device</span>
+
+<span class="sd">        :param device: str or list,</span>
+<span class="sd">        :param arg: str for one internal value, list for special internal values, empty for all internal values</span>
+<span class="sd">        :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function</span>
+<span class="sd">        :return: str, int, float when only specific value requested else dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_internals</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sand_down</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="FhemEventQueue"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue">[docs]</a><span class="k">class</span> <span class="nc">FhemEventQueue</span><span class="p">:</span>
     <span class="sd">&#39;&#39;&#39;Creates a thread that listens to FHEM events and dispatches them to</span>
 <span class="sd">    a Python queue.&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="FhemEventQueue.__init__"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span>  <span class="n">que</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7072</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s1">&#39;telnet&#39;</span><span class="p">,</span>
+
+<div class="viewcode-block" id="FhemEventQueue.__init__"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">que</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">7072</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s1">&#39;telnet&#39;</span><span class="p">,</span>
                  <span class="n">use_ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">csrf</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cafile</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
                  <span class="n">filterlist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                  <span class="n">eventtimeout</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">serverregex</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
@@ -570,14 +724,15 @@
 <span class="sd">        :param timeout: internal timeout for socket receive (should be short)</span>
 <span class="sd">        :param eventtimeout: larger timeout for server keep-alive messages</span>
 <span class="sd">        :param serverregex: FHEM regex to restrict event messages on server side.</span>
-<span class="sd">        :param loglevel: 0: no log, 1: errors, 2: info, 3: debug</span>
+<span class="sd">        :param loglevel: deprecated, will be removed. Use standard python logging function for logger &#39;FhemEventQueue&#39;, old: 0: no log, 1: errors, 2: info, 3: debug</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_loglevel</span><span class="p">(</span><span class="n">loglevel</span><span class="p">)</span>
+        <span class="c1"># self.set_loglevel(loglevel)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;FhemEventQueue&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span> <span class="o">=</span> <span class="s2">&quot;inform timer&quot;</span>
         <span class="k">if</span> <span class="n">serverregex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">serverregex</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="o">!=</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;ONLY TELNET is currently supported for EventQueue&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;ONLY TELNET is currently supported for EventQueue&quot;</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span> <span class="o">=</span> <span class="n">Fhem</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">use_ssl</span><span class="o">=</span><span class="n">use_ssl</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
                          <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">cafile</span><span class="o">=</span><span class="n">cafile</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
@@ -588,22 +743,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">EventThread</span><span class="o">.</span><span class="n">setDaemon</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">EventThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
 
-
 <div class="viewcode-block" id="FhemEventQueue.set_loglevel"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.set_loglevel">[docs]</a>    <span class="k">def</span> <span class="nf">set_loglevel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Set logging level,</span>
+<span class="sd">        Set logging level, [Deprecated, will be removed, use python&#39;s logging.setLevel]</span>
 
 <span class="sd">        :param level: 0: critical, 1: errors, 2: info, 3: debug</span>
 <span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Deprecation: please set logging levels using python&#39;s standard logging for logger &#39;Fhem&#39;&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_event_worker_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">que</span><span class="p">,</span> <span class="n">filterlist</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                              <span class="n">eventtimeout</span><span class="o">=</span><span class="mi">120</span><span class="p">):</span>
@@ -620,7 +775,7 @@
                     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">lastreceive</span> <span class="o">&gt;</span> <span class="n">eventtimeout</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Event-timeout, refreshing INFORM TIMER&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Event-timeout, refreshing INFORM TIMER&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">lastreceive</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -643,7 +798,7 @@
                             <span class="n">val</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
                             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">li</span><span class="p">)):</span>
                                 <span class="n">val</span> <span class="o">+=</span> <span class="n">li</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">li</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">li</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
                                     <span class="n">val</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
                             <span class="n">vl</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
                             <span class="n">val</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -681,18 +836,17 @@
                                             <span class="n">adQ</span> <span class="o">=</span> <span class="kc">True</span>
                                 <span class="k">if</span> <span class="n">adQ</span><span class="p">:</span>
                                     <span class="n">ev</span> <span class="o">=</span> <span class="p">{</span>
-                                            <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">dt</span><span class="p">,</span>
-                                            <span class="s1">&#39;devicetype&#39;</span><span class="p">:</span> <span class="n">devtype</span><span class="p">,</span>
-                                            <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="n">dev</span><span class="p">,</span>
-                                            <span class="s1">&#39;reading&#39;</span><span class="p">:</span> <span class="n">read</span><span class="p">,</span>
-                                            <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">val</span><span class="p">,</span>
-                                            <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="n">unit</span>
-                                          <span class="p">}</span>
+                                        <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">dt</span><span class="p">,</span>
+                                        <span class="s1">&#39;devicetype&#39;</span><span class="p">:</span> <span class="n">devtype</span><span class="p">,</span>
+                                        <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="n">dev</span><span class="p">,</span>
+                                        <span class="s1">&#39;reading&#39;</span><span class="p">:</span> <span class="n">read</span><span class="p">,</span>
+                                        <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">val</span><span class="p">,</span>
+                                        <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="n">unit</span>
+                                    <span class="p">}</span>
                                     <span class="n">que</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">ev</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span>
-
 
 <div class="viewcode-block" id="FhemEventQueue.close"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Stop event thread and close socket.&#39;&#39;&#39;</span>
@@ -745,7 +899,7 @@
       &copy;2018, Dominik Schlösser.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
     </div>
