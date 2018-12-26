@@ -22,6 +22,11 @@ pip install [-U] fhem
 
 In ```python-fhem/fhem```:
 
+Get a copy of README for the install (required by setup.py):
+```bash
+cp ../README.md .
+```
+then:
 ```bash
 pip install [-U] .
 ```
