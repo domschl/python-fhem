@@ -39,6 +39,8 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141 [#12]), fixed
+by using blocking telnet i/o.
 * 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)). See [online documentation](https://domschl.github.io/python-fhem/doc/_build/html/index.html), especially the new get() method for details on the new functionality. Proprietary logging functions marked deprecated. 
 * 0.5.5 (2018-08-26): Documentation cleanup, automatic documentation with sphinx.
 * 0.5.3 (2018-08-26): Fix syntax in exception handler
@@ -60,7 +62,7 @@ Default telnet connection without password and without encryption:
 import logging
 import fhem
 
-logging.basicConfig()  # Python 2 needs this, or you won't see errors
+logging.basicConfig(logging.DEBUG)
 
 # Connect via default protocol telnet, default port 7072:
 fh = fhem.Fhem("myserver.home.org")
@@ -88,7 +90,7 @@ if fh.connected():
 To connect via https with SSL and basicAuth:
 
 ```python
-fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https', loglevel=3,
+fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
                cafile=mycertfile, username="myuser", password="secretsauce")
 ```
 

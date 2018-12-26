@@ -546,7 +546,12 @@ class Fhem:
                     filter_list.append("{}{}{}".format(
                         key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
-            result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
+            if self.protocol == 'telnet':
+                result = self.send_recv_cmd(
+                    cmd, blocking=True, timeout=timeout)
+            else:
+                result = self.send_recv_cmd(
+                    cmd, blocking=False, timeout=timeout)
             if not result or raw_result:
                 return result
             result = result['Results']
