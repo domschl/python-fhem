@@ -62,7 +62,7 @@ Default telnet connection without password and without encryption:
 import logging
 import fhem
 
-logging.basicConfig(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Connect via default protocol telnet, default port 7072:
 fh = fhem.Fhem("myserver.home.org")
