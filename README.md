@@ -8,6 +8,8 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
+'''Note:''' Python 2.x deprecation warning. Python-fhem version 0.6.x will be the last versions supporting Python 2.x.
+
 ## Installation
 
 ### PIP installation (PyPI)
@@ -39,6 +41,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.2 (2019-06-06): Bug fix, get_device_reading() wrongly compared reading-names and could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14).
 * 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141, [#12](https://github.com/domschl/python-fhem/issues/12)), fixed
 by using blocking telnet i/o.
 * 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)). See [online documentation](https://domschl.github.io/python-fhem/doc/_build/html/index.html), especially the new get() method for details on the new functionality. Proprietary logging functions marked deprecated. 
