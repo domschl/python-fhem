@@ -20,13 +20,13 @@ sys.path.insert(0, os.path.abspath('../fhem/fhem'))
 # -- Project information -----------------------------------------------------
 
 project = 'fhem'
-copyright = '2018, Dominik Schlösser'
+copyright = '2018-2019, Dominik Schlösser and contributors'
 author = 'Dominik Schlösser'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.6.0'
+release = '0.6.2'
 
 
 # -- General configuration ---------------------------------------------------

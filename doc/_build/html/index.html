@@ -1,19 +1,17 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Welcome to fhem’s documentation! &#8212; fhem 0.6.0 documentation</title>
+    <meta charset="utf-8" />
+    <title>Welcome to fhem’s documentation! &#8212; fhem 0.6.2 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
@@ -40,346 +38,290 @@
 <h2>Fhem object<a class="headerlink" href="#fhem-object" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="__init__.Fhem">
-<em class="property">class </em><code class="descclassname">__init__.</code><code class="descname">Fhem</code><span class="sig-paren">(</span><em>server</em>, <em>port=7072</em>, <em>use_ssl=False</em>, <em>protocol='telnet'</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">__init__.</code><code class="sig-name descname">Fhem</code><span class="sig-paren">(</span><em class="sig-param">server</em>, <em class="sig-param">port=7072</em>, <em class="sig-param">use_ssl=False</em>, <em class="sig-param">protocol='telnet'</em>, <em class="sig-param">username=''</em>, <em class="sig-param">password=''</em>, <em class="sig-param">csrf=True</em>, <em class="sig-param">cafile=''</em>, <em class="sig-param">loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connects to FHEM via socket communication with optional SSL and password
 support</p>
 <dl class="method">
 <dt id="__init__.Fhem.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>server</em>, <em>port=7072</em>, <em>use_ssl=False</em>, <em>protocol='telnet'</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">server</em>, <em class="sig-param">port=7072</em>, <em class="sig-param">use_ssl=False</em>, <em class="sig-param">protocol='telnet'</em>, <em class="sig-param">username=''</em>, <em class="sig-param">password=''</em>, <em class="sig-param">csrf=True</em>, <em class="sig-param">cafile=''</em>, <em class="sig-param">loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate connector object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>server</strong> – address of FHEM server</li>
-<li><strong>port</strong> – telnet/http(s) port of server</li>
-<li><strong>use_ssl</strong> – boolean for SSL (TLS) [https as protocol sets use_ssl=True]</li>
-<li><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’</li>
-<li><strong>username</strong> – username for http(s) basicAuth validation</li>
-<li><strong>password</strong> – (global) telnet or http(s) password</li>
-<li><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True</li>
-<li><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</li>
-<li><strong>loglevel</strong> – deprecated, will be removed. Please use standard python logging API with logger ‘Fhem’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>server</strong> – address of FHEM server</p></li>
+<li><p><strong>port</strong> – telnet/http(s) port of server</p></li>
+<li><p><strong>use_ssl</strong> – boolean for SSL (TLS) [https as protocol sets use_ssl=True]</p></li>
+<li><p><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’</p></li>
+<li><p><strong>username</strong> – username for http(s) basicAuth validation</p></li>
+<li><p><strong>password</strong> – (global) telnet or http(s) password</p></li>
+<li><p><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True</p></li>
+<li><p><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</p></li>
+<li><p><strong>loglevel</strong> – deprecated, will be removed. Please use standard python logging API with logger ‘Fhem’.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="__init__.Fhem.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#__init__.Fhem.__weakref__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__weakref__</code><a class="headerlink" href="#__init__.Fhem.__weakref__" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.close">
-<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.close" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Closes socket connection. (telnet only)</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.connect">
-<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connect" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>create socket connection to server (telnet protocol only)</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.connected">
-<code class="descname">connected</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connected" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">connected</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.connected"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.connected" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns True if socket/http(s) session is connected to server.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get">
-<code class="descname">get</code><span class="sig-paren">(</span><em>name=None</em>, <em>state=None</em>, <em>group=None</em>, <em>room=None</em>, <em>device_type=None</em>, <em>not_name=None</em>, <em>not_state=None</em>, <em>not_group=None</em>, <em>not_room=None</em>, <em>not_device_type=None</em>, <em>case_sensitive=None</em>, <em>filters=None</em>, <em>timeout=0.1</em>, <em>raw_result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">state=None</em>, <em class="sig-param">group=None</em>, <em class="sig-param">room=None</em>, <em class="sig-param">device_type=None</em>, <em class="sig-param">not_name=None</em>, <em class="sig-param">not_state=None</em>, <em class="sig-param">not_group=None</em>, <em class="sig-param">not_room=None</em>, <em class="sig-param">not_device_type=None</em>, <em class="sig-param">case_sensitive=None</em>, <em class="sig-param">filters=None</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">raw_result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get FHEM data of devices, can filter by parameters or custom defined filters.
 All filters use regular expressions (except full match), so don’t forget escaping.
 Filters can be used by all other get functions.
 For more information about filters, see <a class="reference external" href="https://FHEM.de/commandref.html#devspec">https://FHEM.de/commandref.html#devspec</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> – str or list, device name in FHEM</li>
-<li><strong>state</strong> – str or list, state in FHEM</li>
-<li><strong>group</strong> – str or list, filter FHEM groups</li>
-<li><strong>room</strong> – str or list, filter FHEM room</li>
-<li><strong>device_type</strong> – str or list, FHEM device type</li>
-<li><strong>not_name</strong> – not name</li>
-<li><strong>not_state</strong> – not state</li>
-<li><strong>not_group</strong> – not group</li>
-<li><strong>not_room</strong> – not room</li>
-<li><strong>not_device_type</strong> – not device_type</li>
-<li><strong>case_sensitive</strong> – bool, use case_sensitivity for all filter functions</li>
-<li><strong>filters</strong> – dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {“battery”: “ok”}</li>
-<li><strong>raw_result</strong> – On True: Don’t convert to python types and send full FHEM response</li>
-<li><strong>timeout</strong> – timeout for reply</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – str or list, device name in FHEM</p></li>
+<li><p><strong>state</strong> – str or list, state in FHEM</p></li>
+<li><p><strong>group</strong> – str or list, filter FHEM groups</p></li>
+<li><p><strong>room</strong> – str or list, filter FHEM room</p></li>
+<li><p><strong>device_type</strong> – str or list, FHEM device type</p></li>
+<li><p><strong>not_name</strong> – not name</p></li>
+<li><p><strong>not_state</strong> – not state</p></li>
+<li><p><strong>not_group</strong> – not group</p></li>
+<li><p><strong>not_room</strong> – not room</p></li>
+<li><p><strong>not_device_type</strong> – not device_type</p></li>
+<li><p><strong>case_sensitive</strong> – bool, use case_sensitivity for all filter functions</p></li>
+<li><p><strong>filters</strong> – dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {“battery”: “ok”}</p></li>
+<li><p><strong>raw_result</strong> – On True: Don’t convert to python types and send full FHEM response</p></li>
+<li><p><strong>timeout</strong> – timeout for reply</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict of FHEM devices</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_attributes">
-<code class="descname">get_attributes</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_attributes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_attributes</code><span class="sig-paren">(</span><em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return attributes of a device, can use filters from get()</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arg</strong> – str, Get only specified attribute, return all attributes of device when parameter not given</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arg</strong> – str, Get only specified attribute, return all attributes of device when parameter not given</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with attributes</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict of FHEM devices with attributes</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_device">
-<code class="descname">get_device</code><span class="sig-paren">(</span><em>device</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_device</code><span class="sig-paren">(</span><em class="sig-param">device</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all data from a device</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>device</strong> – str or list,</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – str or list,</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict with data of specific FHEM device</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict with data of specific FHEM device</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_device_attribute">
-<code class="descname">get_device_attribute</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_attribute" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_device_attribute</code><span class="sig-paren">(</span><em class="sig-param">device</em>, <em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_attribute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get attribute(s) of one device</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>device</strong> – str or list,</li>
-<li><strong>arg</strong> – str for one attribute, list for special attributes, empty for all attributes</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – str or list,</p></li>
+<li><p><strong>arg</strong> – str for one attribute, list for special attributes, empty for all attributes</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>str, int, float when only specific value requested else dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_device_internal">
-<code class="descname">get_device_internal</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_internal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_internal" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_device_internal</code><span class="sig-paren">(</span><em class="sig-param">device</em>, <em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_internal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_internal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get internal(s) of one device</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>device</strong> – str or list,</li>
-<li><strong>arg</strong> – str for one internal value, list for special internal values, empty for all internal values</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – str or list,</p></li>
+<li><p><strong>arg</strong> – str for one internal value, list for special internal values, empty for all internal values</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>str, int, float when only specific value requested else dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_device_reading">
-<code class="descname">get_device_reading</code><span class="sig-paren">(</span><em>device</em>, <em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_reading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_reading" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_device_reading</code><span class="sig-paren">(</span><em class="sig-param">device</em>, <em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_reading"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_reading" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reading(s) of one device</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>device</strong> – str or list,</li>
-<li><strong>arg</strong> – str for one reading, list for special readings, empty for all readings</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_readings" title="__init__.Fhem.get_readings"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_readings()</span></code></a> functions</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – str or list,</p></li>
+<li><p><strong>arg</strong> – str for one reading, list for special readings, empty for all readings</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_readings" title="__init__.Fhem.get_readings"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_readings()</span></code></a> functions</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>str, int, float when only specific value requested else dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_device_state">
-<code class="descname">get_device_state</code><span class="sig-paren">(</span><em>device</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_state" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_device_state</code><span class="sig-paren">(</span><em class="sig-param">device</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_device_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_device_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get state of one device</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>device</strong> – str or list,</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_states" title="__init__.Fhem.get_states"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_states()</span></code></a> functions</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> – str or list,</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> and <a class="reference internal" href="#__init__.Fhem.get_states" title="__init__.Fhem.get_states"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get_states()</span></code></a> functions</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">str, int, float when only specific value requested else dict</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>str, int, float when only specific value requested else dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_internals">
-<code class="descname">get_internals</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_internals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_internals" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_internals</code><span class="sig-paren">(</span><em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_internals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_internals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return internals of a device, can use filters from get()</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arg</strong> – str, Get only specified internal, return all internals of device when parameter not given</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arg</strong> – str, Get only specified internal, return all internals of device when parameter not given</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with internals</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict of FHEM devices with internals</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_readings">
-<code class="descname">get_readings</code><span class="sig-paren">(</span><em>*arg</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_readings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_readings" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_readings</code><span class="sig-paren">(</span><em class="sig-param">*arg</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_readings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_readings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return readings of a device, can use filters from get().</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arg</strong> – str, Get only a specified reading, return all readings of device when parameter not given</li>
-<li><strong>value_only</strong> – return only value of reading, not timestamp</li>
-<li><strong>time_only</strong> – return only timestamp of reading</li>
-<li><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arg</strong> – str, Get only a specified reading, return all readings of device when parameter not given</p></li>
+<li><p><strong>value_only</strong> – return only value of reading, not timestamp</p></li>
+<li><p><strong>time_only</strong> – return only timestamp of reading</p></li>
+<li><p><strong>kwargs</strong> – use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict of FHEM devices with readings</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict of FHEM devices with readings</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.get_states">
-<code class="descname">get_states</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_states" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_states</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return only device states, can use filters from get().</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> – Use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict of FHEM devices with states</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Use keyword arguments from <a class="reference internal" href="#__init__.Fhem.get" title="__init__.Fhem.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Fhem.get()</span></code></a> function</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict of FHEM devices with states</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.send">
-<code class="descname">send</code><span class="sig-paren">(</span><em>buf</em>, <em>timeout=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">send</code><span class="sig-paren">(</span><em class="sig-param">buf</em>, <em class="sig-param">timeout=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a buffer to server</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>buf</strong> – binary buffer</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>buf</strong> – binary buffer</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.send_cmd">
-<code class="descname">send_cmd</code><span class="sig-paren">(</span><em>msg</em>, <em>timeout=10.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">send_cmd</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">timeout=10.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a command to server.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>msg</strong> – string with FHEM command, e.g. ‘set lamp on’</li>
-<li><strong>timeout</strong> – timeout on send (sec).</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> – string with FHEM command, e.g. ‘set lamp on’</p></li>
+<li><p><strong>timeout</strong> – timeout on send (sec).</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.send_recv_cmd">
-<code class="descname">send_recv_cmd</code><span class="sig-paren">(</span><em>msg</em>, <em>timeout=0.1</em>, <em>blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_recv_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_recv_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">send_recv_cmd</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_recv_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_recv_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a command to the server and waits for an immediate reply.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>msg</strong> – FHEM command (e.g. ‘set lamp on’)</li>
-<li><strong>timeout</strong> – waiting time for reply</li>
-<li><strong>blocking</strong> – (telnet only) on True: use blocking socket communication (bool)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> – FHEM command (e.g. ‘set lamp on’)</p></li>
+<li><p><strong>timeout</strong> – waiting time for reply</p></li>
+<li><p><strong>blocking</strong> – (telnet only) on True: use blocking socket communication (bool)</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.Fhem.set_loglevel">
-<code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.set_loglevel" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">set_loglevel</code><span class="sig-paren">(</span><em class="sig-param">level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.set_loglevel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set logging level. [Deprecated, will be removed, use python logging.setLevel]</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -389,63 +331,56 @@ For more information about filters, see <a class="reference external" href="http
 <h2>FhemEventQueue object<a class="headerlink" href="#fhemeventqueue-object" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="__init__.FhemEventQueue">
-<em class="property">class </em><code class="descclassname">__init__.</code><code class="descname">FhemEventQueue</code><span class="sig-paren">(</span><em>server</em>, <em>que</em>, <em>port=7072</em>, <em>protocol='telnet'</em>, <em>use_ssl=False</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>filterlist=None</em>, <em>timeout=0.1</em>, <em>eventtimeout=60</em>, <em>serverregex=None</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">__init__.</code><code class="sig-name descname">FhemEventQueue</code><span class="sig-paren">(</span><em class="sig-param">server</em>, <em class="sig-param">que</em>, <em class="sig-param">port=7072</em>, <em class="sig-param">protocol='telnet'</em>, <em class="sig-param">use_ssl=False</em>, <em class="sig-param">username=''</em>, <em class="sig-param">password=''</em>, <em class="sig-param">csrf=True</em>, <em class="sig-param">cafile=''</em>, <em class="sig-param">filterlist=None</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">eventtimeout=60</em>, <em class="sig-param">serverregex=None</em>, <em class="sig-param">loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a thread that listens to FHEM events and dispatches them to
 a Python queue.</p>
 <dl class="method">
 <dt id="__init__.FhemEventQueue.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>server</em>, <em>que</em>, <em>port=7072</em>, <em>protocol='telnet'</em>, <em>use_ssl=False</em>, <em>username=''</em>, <em>password=''</em>, <em>csrf=True</em>, <em>cafile=''</em>, <em>filterlist=None</em>, <em>timeout=0.1</em>, <em>eventtimeout=60</em>, <em>serverregex=None</em>, <em>loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">server</em>, <em class="sig-param">que</em>, <em class="sig-param">port=7072</em>, <em class="sig-param">protocol='telnet'</em>, <em class="sig-param">use_ssl=False</em>, <em class="sig-param">username=''</em>, <em class="sig-param">password=''</em>, <em class="sig-param">csrf=True</em>, <em class="sig-param">cafile=''</em>, <em class="sig-param">filterlist=None</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">eventtimeout=60</em>, <em class="sig-param">serverregex=None</em>, <em class="sig-param">loglevel=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct an event queue object, FHEM events will be queued into the queue given at initialization.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>server</strong> – FHEM server address</li>
-<li><strong>que</strong> – Python Queue object, receives FHEM events as dictionaries</li>
-<li><strong>port</strong> – FHEM telnet port</li>
-<li><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’. NOTE: for FhemEventQueue, currently only ‘telnet’ is supported!</li>
-<li><strong>use_ssl</strong> – boolean for SSL (TLS)</li>
-<li><strong>username</strong> – http(s) basicAuth username</li>
-<li><strong>password</strong> – (global) telnet password or http(s) basicAuth password</li>
-<li><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True (currently not used, since telnet-only)</li>
-<li><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</li>
-<li><strong>filterlist</strong> – array of filter dictionaires [{“dev”=”lamp1”}, {“dev”=”livingtemp”, “reading”=”temperature”}]. A filter dictionary can contain devstate (type of FHEM device), dev (FHEM device name) and/or reading conditions. The filterlist works on client side.</li>
-<li><strong>timeout</strong> – internal timeout for socket receive (should be short)</li>
-<li><strong>eventtimeout</strong> – larger timeout for server keep-alive messages</li>
-<li><strong>serverregex</strong> – FHEM regex to restrict event messages on server side.</li>
-<li><strong>loglevel</strong> – deprecated, will be removed. Use standard python logging function for logger ‘FhemEventQueue’, old: 0: no log, 1: errors, 2: info, 3: debug</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>server</strong> – FHEM server address</p></li>
+<li><p><strong>que</strong> – Python Queue object, receives FHEM events as dictionaries</p></li>
+<li><p><strong>port</strong> – FHEM telnet port</p></li>
+<li><p><strong>protocol</strong> – ‘telnet’, ‘http’ or ‘https’. NOTE: for FhemEventQueue, currently only ‘telnet’ is supported!</p></li>
+<li><p><strong>use_ssl</strong> – boolean for SSL (TLS)</p></li>
+<li><p><strong>username</strong> – http(s) basicAuth username</p></li>
+<li><p><strong>password</strong> – (global) telnet password or http(s) basicAuth password</p></li>
+<li><p><strong>csrf</strong> – (http(s)) use csrf token (FHEM 5.8 and newer), default True (currently not used, since telnet-only)</p></li>
+<li><p><strong>cafile</strong> – path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.</p></li>
+<li><p><strong>filterlist</strong> – array of filter dictionaires [{“dev”=”lamp1”}, {“dev”=”livingtemp”, “reading”=”temperature”}]. A filter dictionary can contain devstate (type of FHEM device), dev (FHEM device name) and/or reading conditions. The filterlist works on client side.</p></li>
+<li><p><strong>timeout</strong> – internal timeout for socket receive (should be short)</p></li>
+<li><p><strong>eventtimeout</strong> – larger timeout for server keep-alive messages</p></li>
+<li><p><strong>serverregex</strong> – FHEM regex to restrict event messages on server side.</p></li>
+<li><p><strong>loglevel</strong> – deprecated, will be removed. Use standard python logging function for logger ‘FhemEventQueue’, old: 0: no log, 1: errors, 2: info, 3: debug</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="__init__.FhemEventQueue.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#__init__.FhemEventQueue.__weakref__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__weakref__</code><a class="headerlink" href="#__init__.FhemEventQueue.__weakref__" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.FhemEventQueue.close">
-<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.close" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop event thread and close socket.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="__init__.FhemEventQueue.set_loglevel">
-<code class="descname">set_loglevel</code><span class="sig-paren">(</span><em>level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.set_loglevel" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">set_loglevel</code><span class="sig-paren">(</span><em class="sig-param">level</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#FhemEventQueue.set_loglevel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.FhemEventQueue.set_loglevel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set logging level, [Deprecated, will be removed, use python’s logging.setLevel]</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>level</strong> – 0: critical, 1: errors, 2: info, 3: debug</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -455,9 +390,9 @@ a Python queue.</p>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div>
 
@@ -487,27 +422,33 @@ a Python queue.</p>
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Dominik Schlösser.
+      &copy;2018-2019, Dominik Schlösser and contributors.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/index.rst.txt"
