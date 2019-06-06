@@ -32,7 +32,7 @@ except ImportError:
     from urllib2 import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 
 # create logger with 'python_fhem'
 # logger = logging.getLogger(__name__)
@@ -456,13 +456,13 @@ class Fhem:
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
                 result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
-                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Value' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))} fixes #14
             elif time_only:
                 result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
-                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Time' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             else:
                 result[r['Name']] = {k: v for k, v in r[value].items() if
-                                     (not len(arg) or (len(arg) and k in arg[0]))}
+                                     (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             if not result[r['Name']]:
                 result.pop(r['Name'], None)
             elif len(result[r['Name']].values()) == 1:
