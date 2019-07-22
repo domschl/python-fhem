@@ -88,7 +88,7 @@ support</p>
 
 <dl class="method">
 <dt id="__init__.Fhem.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">state=None</em>, <em class="sig-param">group=None</em>, <em class="sig-param">room=None</em>, <em class="sig-param">device_type=None</em>, <em class="sig-param">not_name=None</em>, <em class="sig-param">not_state=None</em>, <em class="sig-param">not_group=None</em>, <em class="sig-param">not_room=None</em>, <em class="sig-param">not_device_type=None</em>, <em class="sig-param">case_sensitive=None</em>, <em class="sig-param">filters=None</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">raw_result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">name=None</em>, <em class="sig-param">state=None</em>, <em class="sig-param">group=None</em>, <em class="sig-param">room=None</em>, <em class="sig-param">device_type=None</em>, <em class="sig-param">not_name=None</em>, <em class="sig-param">not_state=None</em>, <em class="sig-param">not_group=None</em>, <em class="sig-param">not_room=None</em>, <em class="sig-param">not_device_type=None</em>, <em class="sig-param">case_sensitive=None</em>, <em class="sig-param">filters=None</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">blocking=False</em>, <em class="sig-param">raw_result=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get FHEM data of devices, can filter by parameters or custom defined filters.
 All filters use regular expressions (except full match), so don’t forget escaping.
 Filters can be used by all other get functions.
@@ -110,6 +110,7 @@ For more information about filters, see <a class="reference external" href="http
 <li><p><strong>filters</strong> – dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {“battery”: “ok”}</p></li>
 <li><p><strong>raw_result</strong> – On True: Don’t convert to python types and send full FHEM response</p></li>
 <li><p><strong>timeout</strong> – timeout for reply</p></li>
+<li><p><strong>blocking</strong> – telnet socket mode, default blocking=False</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -300,7 +301,7 @@ For more information about filters, see <a class="reference external" href="http
 
 <dl class="method">
 <dt id="__init__.Fhem.send_recv_cmd">
-<code class="sig-name descname">send_recv_cmd</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_recv_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_recv_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">send_recv_cmd</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">timeout=0.1</em>, <em class="sig-param">blocking=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/__init__.html#Fhem.send_recv_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#__init__.Fhem.send_recv_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a command to the server and waits for an immediate reply.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -447,7 +448,7 @@ a Python queue.</p>
       &copy;2018-2019, Dominik Schlösser and contributors.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
