@@ -11,8 +11,8 @@ matrix:
               - "~/selftest"
 
       install:
-          - cp ~/README.md ~/fhem
-          - cd ~/fhem && pip install -e .
+          - cp ~/domschl/python-fhem/README.md ~/domschl/python-fhem/fhem
+          - cd ~/domschl/python-fhem/fhem && pip install -e .
           
       script:
           - cd ~/selftest && python selftest.py
@@ -27,8 +27,8 @@ matrix:
               - "~/selftest"
 
       install:
-          - cp ~/README.md ~/fhem
-          - cd ~/fhem && pip install -e .
+          - cp ~/domschl/python-fhem/README.md ~/domschl/python-fhem/fhem
+          - cd ~/domschl/python-fhem/fhem && pip install -e .
 
       script:
           - cd ~/selftest && python selftest.py
