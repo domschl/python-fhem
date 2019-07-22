@@ -1,0 +1,33 @@
+matrix:
+  include:
+
+    - language: python
+      python:
+          - "3.6"
+
+      sudo: false
+      cache:
+          directories:
+              - "~/selftest"
+
+      install:
+          - pip install https://github.com/domschl/python-fhem/archive/master.zip
+          
+      script:
+          - cd selftest && python selftest.py
+
+    - language: python
+      python:
+          - "2.7"
+
+      sudo: false
+      cache:
+          directories:
+              - "~/selftest"
+
+      install:
+          - pip install https://github.com/domschl/python-fhem/archive/master.zip
+
+      script:
+          - cd selftest && python selftest.py
+

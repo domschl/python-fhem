@@ -31,12 +31,21 @@ import tarfile
 
 import fhem
 
+"""
+FhemSelfTester implements necessary functionality for automatic testing of FHEM
+with the Python API.
+This module can automatically download, install and run a clean FHEM server.
+"""
+
 
 class FhemSelfTester:
     def __init__(self):
         self.log = logging.getLogger('SelfTester')
 
     def download(self, filename, urlpath):
+        """
+        Download an FHEM tar.gz file, if not yet available locally.
+        """
         if os.path.exists(filename):
             return True
         try:
@@ -52,6 +61,13 @@ class FhemSelfTester:
         return True
 
     def install(self, archivename, destination, sanity_check_file):
+        """
+        Install a NEW, DEFAULT FHEM server.
+        WARNING: the directory tree in destination is ERASED! In order to prevent
+        accidental erasures, the destination direction must contain 'fhem' and the fhem.pl
+        file at sanity_check_file must exist.
+        OLD INSTALLATIONS ARE DELETE!
+        """
         if not archivename.endswith("tar.gz"):
             self.log.error(
                 "Archive needs to be of type *.tar.gz: {}".format(archivename))
@@ -79,6 +95,9 @@ class FhemSelfTester:
         return True
 
     def is_running(self, fhem_url='localhost', protocol='http', port=8083):
+        """
+        Check if an fhem server is already running.
+        """
         fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
         ver = fh.send_cmd('version')
         if ver is not None:
@@ -87,6 +106,9 @@ class FhemSelfTester:
         return None
 
     def shutdown(self, fhem_url='localhost', protocol='http', port=8083):
+        """
+        Shutdown a running FHEM server
+        """
         fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
         fh.log.level = logging.CRITICAL
         try:
@@ -95,6 +117,20 @@ class FhemSelfTester:
         except:
             pass
         self.log.warning("Fhem shutdown complete.")
+
+
+def create_device(fhem, name, readings):
+    fhem.send_cmd("define {} dummy".format(name))
+    fh.send_cmd("attr {} setList state:on,off".format(name))
+    fh.send_cmd("set {} on".format(name))
+    readingList = ""
+    for rd in readings:
+        if readingList != "":
+            readingList += " "
+        readingList += rd
+    fh.send_cmd("attr {} readingList {}".format(name, readingList))
+    for rd in readings:
+        fh.send_cmd("setreading {} {} {}".format(name, rd, readings[rd]))
 
 
 if __name__ == '__main__':
@@ -124,6 +160,8 @@ if __name__ == '__main__':
         print("Download failed.")
         sys.exit(-1)
 
+# WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
+# All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
     if not st.install(config['archivename'], config['destination'], config['fhem_file']):
         print("Install failed")
         sys.exit(-2)
@@ -138,19 +176,29 @@ if __name__ == '__main__':
     print("Install should be ok, Fhem running.")
 
     fh = fhem.Fhem(config['testhost'], protocol='http', port=8083)
-    fh.send_cmd("define grotzel dummy")
-    fh.send_cmd("attr grotzel setList state:on,off")
-    fh.send_cmd("set grotzel on")
-    fh.send_cmd("attr grotzel readingList temperature humidity")
-    fh.send_cmd("setreading grotzel temperature 10.2")
-    fh.send_cmd("setreading grotzel humidity 88.9")
 
-    temp = fh.get_dev_reading("grotzel", "temperature")
-    if temp == 10.2:
-        print("Reading-test ok.")
-    else:
-        print("Failed to set and read dummy reading!")
-        sys.exit(-5)
+    devs = [
+        {'name': 'clima_sensor1',
+         'readings': {'temperature': 18.2,
+                      'humidity': 88.2}},
+        {'name': 'clima_sensor2',
+         'readings': {'temperature': 19.1,
+                      'humidity': 85.7}}
+    ]
+
+    for dev in devs:
+        create_device(fh, dev['name'], dev['readings'])
+
+    for dev in devs:
+        for rd in dev['readings']:
+            value = fh.get_dev_reading(dev['name'], rd)
+            if value == dev['readings'][rd]:
+                print(
+                    "Reading-test {},{}={} ok.".format(dev['name'], rd, dev['readings'][rd]))
+            else:
+                print("Failed to set and read reading! {},{} != {}".format(
+                    dev['name'], rd, dev['readings'][rd]))
+                sys.exit(-5)
 
     fh.close()
 
