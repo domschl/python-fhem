@@ -346,7 +346,7 @@ class Fhem:
             self.sock.setblocking(True)
         return data
 
-    def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
+    def send_recv_cmd(self, msg, timeout=0.1, blocking=False):
         '''
         Sends a command to the server and waits for an immediate reply.
 
@@ -363,6 +363,7 @@ class Fhem:
                 time.sleep(timeout)
                 data = []
                 if blocking is True:
+                    print("BLOCKING!")
                     try:
                         # This causes failures if reply is larger!
                         data = self.sock.recv(64000)
@@ -370,6 +371,7 @@ class Fhem:
                         self.log.error("Failed to recv msg. {}".format(data))
                         return {}
                 else:
+                    print("NON_BLOCKING!")
                     data = self._recv_nonblocking(timeout)
 
                 self.sock.setblocking(True)

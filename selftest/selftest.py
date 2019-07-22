@@ -250,7 +250,7 @@ if __name__ == '__main__':
         for dev in devs:
             if 'temperature' in dev['readings']:
                 num_temps += 1
-        temps = fh.get_readings("temperature", timeout=1)
+        temps = fh.get_readings("temperature", timeout=0.1, blocking=False)
         if len(temps) != num_temps:
             print("There should have been {} devices with temperature reading, but we got {}. Ans: {}".format(
                 num_temps, len(temps), temps))
