@@ -364,7 +364,8 @@ class Fhem:
                 data = []
                 if blocking is True:
                     try:
-                        data = self.sock.recv(32000)
+                        # This causes failures if reply is larger!
+                        data = self.sock.recv(64000)
                     except socket.error:
                         self.log.error("Failed to recv msg. {}".format(data))
                         return {}
