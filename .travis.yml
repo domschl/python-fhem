@@ -14,11 +14,9 @@ matrix:
           - cd fhem
           - cp ../README.md .
           - python setup.py install
-          - cd ..
           
       script:
           - cd selftest && python selftest.py
-          - cd ..
 
     - language: python
       python:
@@ -33,9 +31,7 @@ matrix:
           - cd fhem
           - cp ../README.md .
           - python setup.py install
-          - cd ..
 
       script:
           - cd selftest && python selftest.py
-          - cd ..
 
