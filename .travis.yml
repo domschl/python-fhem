@@ -11,7 +11,7 @@ matrix:
               - "~/selftest"
 
       install:
-          - python fhem/setup.py install
+          - cd fhem && pip install -e . && cd ..
           
       script:
           - cd selftest && python selftest.py
@@ -26,7 +26,7 @@ matrix:
               - "~/selftest"
 
       install:
-          - python fhem/setup.py install
+          - cd fhem && pip install -e . && cd ..
 
       script:
           - cd selftest && python selftest.py
