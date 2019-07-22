@@ -1,4 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/fhem.svg)](https://badge.fury.io/py/fhem)
+[![TravisCI Test Status](https://travis-ci.org/domschl/python-fhem.svg?branch=master)](https://travis-ci.org/domschl/python-fhem)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/116e9e988d934aaa9cfbfa5b8aef7f78)](https://www.codacy.com/app/dominik.schloesser/python-fhem?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=domschl/python-fhem&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
 
@@ -39,6 +40,7 @@ pip install [-U] -e .
 
 ## History
 
+* [build environment] (2019-07-22): Initial support for TravisCI automated self-tests.
 * 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141, [#12](https://github.com/domschl/python-fhem/issues/12)), fixed
 by using blocking telnet i/o.
 * 0.6.0 (2018-12-16): Enhanced and expanded get-API (Andre0512 [#10](https://github.com/domschl/python-fhem/pull/10)). See [online documentation](https://domschl.github.io/python-fhem/doc/_build/html/index.html), especially the new get() method for details on the new functionality. Proprietary logging functions marked deprecated. 
