@@ -226,10 +226,11 @@ if __name__ == '__main__':
             first = False
 
         for dev in devs:
-            for rd in dev['readings']:
-                for i in range(10):
-                    print("Repetion: {}".format(i+1))
-                    dict_value = fh.get_device_reading(dev['name'], rd)
+            for i in range(10):
+                print("Repetion: {}".format(i+1))
+                for rd in dev['readings']:
+                    dict_value = fh.get_device_reading(
+                        dev['name'], rd, blocking=False)
                     try:
                         value = dict_value['Value']
                     except:
@@ -256,6 +257,13 @@ if __name__ == '__main__':
             sys.exit(-6)
         else:
             print("Multiread of all devices with 'temperature' reading:   ok.")
+
+        states = fh.get_states()
+        if len(states) < 5:
+            print("Iconsistent number of states: {}".format(len(states)))
+            sys.exit(-7)
+        else:
+            print("states received: {}, ok.".format(len(states)))
 
         fh.close()
 

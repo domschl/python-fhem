@@ -45,7 +45,8 @@ pip install [-U] -e .
 
 ## History
 
-* 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14).
+* 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14). Default blocking mode for telnet has been set to non-blocking. This can be changed with parameter `blocking=True` (telnet only). Use of HTTP(S) is recommended (superior
+performance and faster)
 * [build environment] (2019-07-22): Initial support for TravisCI automated self-tests.
 * 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141, [#12](https://github.com/domschl/python-fhem/issues/12)), fixed
 by using blocking telnet i/o.
