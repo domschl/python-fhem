@@ -505,7 +505,7 @@ class Fhem:
                 self._convert_data(response, i, v)
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
-            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, raw_result=None):
+            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, blocking=False, raw_result=None):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -526,6 +526,7 @@ class Fhem:
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
         :param raw_result: On True: Don't convert to python types and send full FHEM response
         :param timeout: timeout for reply
+        :param blocking: telnet socket mode, default blocking=False
         :return: dict of FHEM devices
         """
         if not self.connected():
