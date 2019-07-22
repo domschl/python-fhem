@@ -32,7 +32,7 @@ except ImportError:
     from urllib2 import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 
 # create logger with 'python_fhem'
 # logger = logging.getLogger(__name__)
@@ -346,7 +346,7 @@ class Fhem:
             self.sock.setblocking(True)
         return data
 
-    def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
+    def send_recv_cmd(self, msg, timeout=0.1, blocking=False):
         '''
         Sends a command to the server and waits for an immediate reply.
 
@@ -364,7 +364,8 @@ class Fhem:
                 data = []
                 if blocking is True:
                     try:
-                        data = self.sock.recv(32000)
+                        # This causes failures if reply is larger!
+                        data = self.sock.recv(64000)
                     except socket.error:
                         self.log.error("Failed to recv msg. {}".format(data))
                         return {}
@@ -456,13 +457,13 @@ class Fhem:
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
                 result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
-                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Value' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))} fixes #14
             elif time_only:
                 result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
-                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Time' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             else:
                 result[r['Name']] = {k: v for k, v in r[value].items() if
-                                     (not len(arg) or (len(arg) and k in arg[0]))}
+                                     (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             if not result[r['Name']]:
                 result.pop(r['Name'], None)
             elif len(result[r['Name']].values()) == 1:
@@ -504,7 +505,7 @@ class Fhem:
                 self._convert_data(response, i, v)
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
-            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, raw_result=None):
+            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, blocking=False, raw_result=None):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -525,6 +526,7 @@ class Fhem:
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
         :param raw_result: On True: Don't convert to python types and send full FHEM response
         :param timeout: timeout for reply
+        :param blocking: telnet socket mode, default blocking=False
         :return: dict of FHEM devices
         """
         if not self.connected():
@@ -548,7 +550,7 @@ class Fhem:
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             if self.protocol == 'telnet':
                 result = self.send_recv_cmd(
-                    cmd, blocking=True, timeout=timeout)
+                    cmd, blocking=blocking, timeout=timeout)
             else:
                 result = self.send_recv_cmd(
                     cmd, blocking=False, timeout=timeout)

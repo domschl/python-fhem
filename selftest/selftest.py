@@ -226,40 +226,44 @@ if __name__ == '__main__':
             first = False
 
         for dev in devs:
-            for rd in dev['readings']:
-                dict_value = fh.get_device_reading(dev['name'], rd)
-                try:
-                    value = dict_value['Value']
-                except:
-                    print(
-                        'Bad reply reading {} {} -> {}'.format(dev['name'], rd, dict_value))
-                    sys.exit(-7)
+            for i in range(10):
+                print("Repetion: {}".format(i+1))
+                for rd in dev['readings']:
+                    dict_value = fh.get_device_reading(
+                        dev['name'], rd, blocking=False)
+                    try:
+                        value = dict_value['Value']
+                    except:
+                        print(
+                            'Bad reply reading {} {} -> {}'.format(dev['name'], rd, dict_value))
+                        sys.exit(-7)
 
-                if value == dev['readings'][rd]:
-                    print(
-                        "Reading-test {},{}={} ok.".format(dev['name'], rd, dev['readings'][rd]))
-                else:
-                    print("Failed to set and read reading! {},{} {} != {}".format(
-                        dev['name'], rd, value, dev['readings'][rd]))
-                    sys.exit(-5)
+                    if value == dev['readings'][rd]:
+                        print(
+                            "Reading-test {},{}={} ok.".format(dev['name'], rd, dev['readings'][rd]))
+                    else:
+                        print("Failed to set and read reading! {},{} {} != {}".format(
+                            dev['name'], rd, value, dev['readings'][rd]))
+                        sys.exit(-5)
 
         num_temps = 0
         for dev in devs:
             if 'temperature' in dev['readings']:
                 num_temps += 1
-        temps = fh.get_readings("temperature", timeout=1)
+        temps = fh.get_readings("temperature", timeout=0.1, blocking=False)
         if len(temps) != num_temps:
             print("There should have been {} devices with temperature reading, but we got {}. Ans: {}".format(
                 num_temps, len(temps), temps))
-            try:
-                if connection['protocol'] != 'telnet':
-                    sys.exit(-6)
-                else:
-                    print('Telnet protocol is deprecated for wildcard operations!')
-            except:
-                sys.exit(-6)
+            sys.exit(-6)
         else:
             print("Multiread of all devices with 'temperature' reading:   ok.")
+
+        states = fh.get_states()
+        if len(states) < 5:
+            print("Iconsistent number of states: {}".format(len(states)))
+            sys.exit(-7)
+        else:
+            print("states received: {}, ok.".format(len(states)))
 
         fh.close()
 

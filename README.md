@@ -9,6 +9,8 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
+'''Note:''' Python 2.x deprecation warning. Python-fhem version 0.6.x will be the last versions supporting Python 2.x.
+
 ## Installation
 
 ### PIP installation (PyPI)
@@ -21,13 +23,16 @@ pip install [-U] fhem
 
 ### From source
 
-In ```python-fhem/fhem```:
+In `python-fhem/fhem`:
 
 Get a copy of README for the install (required by setup.py):
+
 ```bash
 cp ../README.md .
 ```
+
 then:
+
 ```bash
 pip install [-U] .
 ```
@@ -40,6 +45,8 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14). Default blocking mode for telnet has been set to non-blocking. This can be changed with parameter `blocking=True` (telnet only). Use of HTTP(S) is recommended (superior
+performance and faster)
 * [build environment] (2019-07-22): Initial support for TravisCI automated self-tests.
 * 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141, [#12](https://github.com/domschl/python-fhem/issues/12)), fixed
 by using blocking telnet i/o.
@@ -66,8 +73,8 @@ import fhem
 
 logging.basicConfig(level=logging.DEBUG)
 
-# Connect via default protocol telnet, default port 7072:
-fh = fhem.Fhem("myserver.home.org")
+## Connect via HTTP, port 8083:
+fh = fhem.Fhem("myserver.home.org", protocol="http", port=8083)
 # Send a command to FHEM (this automatically connects() in case of telnet)
 fh.send_cmd("set lamp on")
 # Get temperatur of LivingThermometer
@@ -78,6 +85,34 @@ lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_o
 tvs = fh.get(device_type=["LGTV", "STV"])
 # Get indoor thermometers with low battery
 low = fh.get_readings(name=".*Thermometer", not_room="outdoor", filter={"battery!": "ok"})
+# Get temperature readings from all devices that have a temperature reading:
+all_temps = fh.get_readings('temperature')
+```
+
+HTTPS connection:
+
+```python
+fh = fhem.Fhem('myserver.home.org', port=8085, protocol='https')
+```
+
+Self-signed certs are accepted (since no `cafile` option is given).
+
+To connect via https with SSL and basicAuth:
+
+```python
+fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
+               cafile=mycertfile, username="myuser", password="secretsauce")
+```
+
+If no public certificate `cafile` is given, then self-signed certs are accepted.
+
+## Connect via default protocol telnet, default port 7072: (deprecated)
+
+*Note*: Connection via telnet is not reliable for large requests, which
+includes everything that uses wildcard-funcionality.
+
+```python
+fh = fhem.Fhem("myserver.home.org")
 ```
 
 To connect via telnet with SSL and password:
@@ -89,12 +124,7 @@ if fh.connected():
     # Do things
 ```
 
-To connect via https with SSL and basicAuth:
-
-```python
-fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
-               cafile=mycertfile, username="myuser", password="secretsauce")
-```
+It is recommended to use HTTP(S) to connect to Fhem instead.
 
 ### Event queues (currently telnet only)
 
