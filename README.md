@@ -88,14 +88,13 @@ low = fh.get_readings(name=".*Thermometer", not_room="outdoor", filter={"battery
 all_temps = fh.get_readings('temperature')
 ```
 
-To connect via telnet with SSL and password:
+HTTPS connection:
 
 ```python
-fh = fhem.Fhem("myserver.home.org", port=7073, use_ssl=True, password='mysecret')
-fh.connect()
-if fh.connected():
-    # Do things
+fh = fhem.Fhem('myserver.home.org', port=8085, protocol='https')
 ```
+
+Self-signed certs are accepted (since no `cafile` option is given).
 
 To connect via https with SSL and basicAuth:
 
@@ -104,6 +103,8 @@ fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
                cafile=mycertfile, username="myuser", password="secretsauce")
 ```
 
+If no public certificate `cafile` is given, then self-signed certs are accepted.
+
 ## Connect via default protocol telnet, default port 7072: (deprecated)
 
 *Note*: Connection via telnet is not reliable for large requests, which
@@ -111,6 +112,15 @@ includes everything that uses wildcard-funcionality.
 
 ```python
 fh = fhem.Fhem("myserver.home.org")
+```
+
+To connect via telnet with SSL and password:
+
+```python
+fh = fhem.Fhem("myserver.home.org", port=7073, use_ssl=True, password='mysecret')
+fh.connect()
+if fh.connected():
+    # Do things
 ```
 
 It is recommended to use HTTP(S) to connect to Fhem instead.
