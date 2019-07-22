@@ -11,8 +11,8 @@ matrix:
               - "~/selftest"
 
       install:
-          - pwd
-          - python setup.py install
+          - echo `pwd`
+          - python domschl/python-fhem/fhem/setup.py install
           
       script:
           - cd ~/selftest && python selftest.py
