@@ -148,8 +148,6 @@ if __name__ == '__main__':
         'fhem_dir': "./fhem/fhem-5.9/",
         'exec': "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
         'testhost': 'localhost',
-        'protocol': 'http',
-        'port': 8083
     }
 
     if st.is_running(fhem_url=config['testhost'], protocol='http', port=8083) is not None:
@@ -189,43 +187,80 @@ if __name__ == '__main__':
 
     print("Install should be ok, Fhem running.")
 
-    fh = fhem.Fhem(config['testhost'], protocol='http', port=8083)
-
-    devs = [
-        {'name': 'clima_sensor1',
-         'readings': {'temperature': 18.2,
-                      'humidity': 88.2}},
-        {'name': 'clima_sensor2',
-         'readings': {'temperature': 19.1,
-                      'humidity': 85.7}}
+    connections = [
+        {'protocol': 'http',
+         'port': 8083},
+        {'protocol': 'telnet',
+         'port': 7072},
+        {'protocol': 'telnet',
+         'port': 7073,
+         'use_ssl': True,
+         'password': 'secretsauce'},
+        {'protocol': 'https',
+         'port': 8084},
+        {'protocol': 'https',
+         'port': 8085,
+         'username': 'test',
+         'password': 'secretsauce'},
     ]
 
-    for dev in devs:
-        create_device(fh, dev['name'], dev['readings'])
+    first = True
 
-    for dev in devs:
-        for rd in dev['readings']:
-            value = fh.get_dev_reading(dev['name'], rd)
-            if value == dev['readings'][rd]:
-                print(
-                    "Reading-test {},{}={} ok.".format(dev['name'], rd, dev['readings'][rd]))
-            else:
-                print("Failed to set and read reading! {},{} != {}".format(
-                    dev['name'], rd, dev['readings'][rd]))
-                sys.exit(-5)
+    for connection in connections:
+        print('Testing connection to {} via {}'.format(
+            config['testhost'], connection))
+        fh = fhem.Fhem(config['testhost'], **connection)
 
-    num_temps = 0
-    for dev in devs:
-        if 'temperature' in dev['readings']:
-            num_temps += 1
-    temps = fh.get_readings("temperature")
-    if len(temps) != num_temps:
-        print("There should have been {} devices with temperature reading, but we got {}.".format(
-            num_temps, len(temps)))
-        sys.exit(-6)
-    else:
-        print("Multiread of all devices with 'temperature' reading:   ok.")
+        devs = [
+            {'name': 'clima_sensor1',
+             'readings': {'temperature': 18.2,
+                          'humidity': 88.2}},
+            {'name': 'clima_sensor2',
+             'readings': {'temperature': 19.1,
+                          'humidity': 85.7}}
+        ]
 
-    fh.close()
+        if first is True:
+            for dev in devs:
+                create_device(fh, dev['name'], dev['readings'])
+            first = False
+
+        for dev in devs:
+            for rd in dev['readings']:
+                dict_value = fh.get_device_reading(dev['name'], rd)
+                try:
+                    value = dict_value['Value']
+                except:
+                    print(
+                        'Bad reply reading {} {} -> {}'.format(dev['name'], rd, dict_value))
+                    sys.exit(-7)
+
+                if value == dev['readings'][rd]:
+                    print(
+                        "Reading-test {},{}={} ok.".format(dev['name'], rd, dev['readings'][rd]))
+                else:
+                    print("Failed to set and read reading! {},{} {} != {}".format(
+                        dev['name'], rd, value, dev['readings'][rd]))
+                    sys.exit(-5)
+
+        num_temps = 0
+        for dev in devs:
+            if 'temperature' in dev['readings']:
+                num_temps += 1
+        temps = fh.get_readings("temperature")
+        if len(temps) != num_temps:
+            print("There should have been {} devices with temperature reading, but we got {}. Ans: {}".format(
+                num_temps, len(temps), temps))
+            try:
+                if connection['protocol'] != 'telnet':
+                    sys.exit(-6)
+                else:
+                    print('Telnet protocol is deprecated for wildcard operations!')
+            except:
+                sys.exit(-6)
+        else:
+            print("Multiread of all devices with 'temperature' reading:   ok.")
+
+        fh.close()
 
     sys.exit(0)
