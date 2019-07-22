@@ -134,7 +134,9 @@ def create_device(fhem, name, readings):
 
 
 if __name__ == '__main__':
+    print("Start FhemSelfTest")
     st = FhemSelfTester()
+    print("State 1: Object created.")
     config = {
         'archivename': "./fhem-5.9.tar.gz",
         'urlpath': "https://fhem.de/fhem-5.9.tar.gz",
@@ -159,6 +161,8 @@ if __name__ == '__main__':
     if not st.download(config['archivename'], config['urlpath']):
         print("Download failed.")
         sys.exit(-1)
+
+    print("Starting fhem installation")
 
 # WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
 # All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
