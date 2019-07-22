@@ -23,7 +23,7 @@ pip install [-U] fhem
 
 ### From source
 
-In ```python-fhem/fhem```:
+In `python-fhem/fhem`:
 
 Get a copy of README for the install (required by setup.py):
 
