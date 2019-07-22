@@ -363,7 +363,6 @@ class Fhem:
                 time.sleep(timeout)
                 data = []
                 if blocking is True:
-                    print("BLOCKING!")
                     try:
                         # This causes failures if reply is larger!
                         data = self.sock.recv(64000)
@@ -371,7 +370,6 @@ class Fhem:
                         self.log.error("Failed to recv msg. {}".format(data))
                         return {}
                 else:
-                    print("NON_BLOCKING!")
                     data = self._recv_nonblocking(timeout)
 
                 self.sock.setblocking(True)
