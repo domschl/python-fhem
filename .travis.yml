@@ -1,0 +1,39 @@
+matrix:
+  include:
+
+    - language: python
+      python:
+          - "3.6"
+
+      sudo: false
+      cache:
+          directories:
+              - "~/selftest"
+
+      install:
+          - cd fhem
+          - cp ../README.md .
+          - python setup.py install
+          - cd ..
+          
+      script:
+          - cd selftest && python selftest.py
+
+    - language: python
+      python:
+          - "2.7"
+
+      sudo: false
+      cache:
+          directories:
+              - "~/selftest"
+
+      install:
+          - cd fhem
+          - cp ../README.md .
+          - python setup.py install
+          - cd ..
+
+      script:
+          - cd selftest && python selftest.py
+
