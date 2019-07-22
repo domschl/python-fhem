@@ -550,7 +550,7 @@ class Fhem:
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
             if self.protocol == 'telnet':
                 result = self.send_recv_cmd(
-                    cmd, blocking=True, timeout=timeout)
+                    cmd, blocking=blocking, timeout=timeout)
             else:
                 result = self.send_recv_cmd(
                     cmd, blocking=False, timeout=timeout)
