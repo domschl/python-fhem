@@ -9,7 +9,7 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
-'''Note:''' Python 2.x deprecation warning. Python-fhem version 0.6.x will be the last versions supporting Python 2.x.
+**Note:** Python 2.x deprecation warning. `python-fhem` versions 0.6.x will be the last versions supporting Python 2.x.
 
 ## Installation
 
