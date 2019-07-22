@@ -26,10 +26,13 @@ pip install [-U] fhem
 In ```python-fhem/fhem```:
 
 Get a copy of README for the install (required by setup.py):
+
 ```bash
 cp ../README.md .
 ```
+
 then:
+
 ```bash
 pip install [-U] .
 ```
@@ -42,7 +45,7 @@ pip install [-U] -e .
 
 ## History
 
-* 0.6.2 (2019-06-06): Bug fix, get_device_reading() wrongly compared reading-names and could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14).
+* 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14).
 * [build environment] (2019-07-22): Initial support for TravisCI automated self-tests.
 * 0.6.1 (2018-12-26): New API used telnet non-blocking on get which caused problems (d1nd141, [#12](https://github.com/domschl/python-fhem/issues/12)), fixed
 by using blocking telnet i/o.
@@ -69,8 +72,8 @@ import fhem
 
 logging.basicConfig(level=logging.DEBUG)
 
-# Connect via default protocol telnet, default port 7072:
-fh = fhem.Fhem("myserver.home.org")
+## Connect via HTTP, port 8083:
+fh = fhem.Fhem("myserver.home.org", protocol="http", port=8083)
 # Send a command to FHEM (this automatically connects() in case of telnet)
 fh.send_cmd("set lamp on")
 # Get temperatur of LivingThermometer
@@ -81,6 +84,8 @@ lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_o
 tvs = fh.get(device_type=["LGTV", "STV"])
 # Get indoor thermometers with low battery
 low = fh.get_readings(name=".*Thermometer", not_room="outdoor", filter={"battery!": "ok"})
+# Get temperature readings from all devices that have a temperature reading:
+all_temps = fh.get_readings('temperature')
 ```
 
 To connect via telnet with SSL and password:
@@ -98,6 +103,17 @@ To connect via https with SSL and basicAuth:
 fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
                cafile=mycertfile, username="myuser", password="secretsauce")
 ```
+
+## Connect via default protocol telnet, default port 7072: (deprecated)
+
+*Note*: Connection via telnet is not reliable for large requests, which
+includes everything that uses wildcard-funcionality.
+
+```python
+fh = fhem.Fhem("myserver.home.org")
+```
+
+It is recommended to use HTTP(S) to connect to Fhem instead.
 
 ### Event queues (currently telnet only)
 
