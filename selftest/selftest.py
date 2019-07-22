@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import logging
+import time
 
 try:
     # Python 3.x
@@ -27,6 +28,8 @@ except ImportError:
     from urllib2 import install_opener
 
 import tarfile
+
+import fhem
 
 
 class FhemSelfTester:
@@ -75,14 +78,47 @@ class FhemSelfTester:
             self.log.error("Failed to extract {}, {}".format(archivename, e))
         return True
 
+    def is_running(self, fhem_url='localhost', protocol='http', port=8083):
+        fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
+        ver = fh.send_cmd('version')
+        if ver is not None:
+            fh.close()
+            return ver
+        return None
+
+    def shutdown(self, fhem_url='localhost', protocol='http', port=8083):
+        fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
+        fh.log.level = logging.CRITICAL
+        try:
+            self.log.warning("Shutting down fhem at {}".format(fhem_url))
+            fh.send_cmd("shutdown")
+        except:
+            pass
+        self.log.warning("Fhem shutdown complete.")
+
 
 if __name__ == '__main__':
     st = FhemSelfTester()
     config = {
         'archivename': "./fhem-5.9.tar.gz",
         'urlpath': "https://fhem.de/fhem-5.9.tar.gz",
-        'destination': "./fhem"
+        'destination': "./fhem",
+        'exec': "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
+        'testhost': 'localhost',
+        'protocol': 'http',
+        'port': 8083
     }
+
+    if st.is_running(fhem_url=config['testhost'], protocol='http', port=8083) is not None:
+        print("Fhem is already running!")
+        st.shutdown(fhem_url=config['testhost'], protocol='http', port=8083)
+        time.sleep(1)
+        if st.is_running(fhem_url=config['testhost'], protocol='http', port=8083) is not None:
+            print("Shutdown failed!")
+            sys.exit(-3)
+        print("--------------------")
+        print("Reinstalling FHEM...")
+
     if not st.download(config['archivename'], config['urlpath']):
         print("Download failed.")
         sys.exit(-1)
@@ -91,5 +127,13 @@ if __name__ == '__main__':
         print("Install failed")
         sys.exit(-2)
 
-    print("Install should be ok.")
+    os.system(config['exec'])
+    time.sleep(1)
+
+    if st.is_running(fhem_url=config['testhost'], protocol='http', port=8083) is None:
+        print("Fhem is NOT running after install and start!")
+        sys.exit(-4)
+
+    print("Install should be ok, Fhem running.")
+
     sys.exit(0)
