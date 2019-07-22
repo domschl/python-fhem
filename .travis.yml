@@ -5,12 +5,12 @@ matrix:
       python:
           - "3.6"
 
-      sudo: false
       cache:
           directories:
               - "~/selftest"
 
       install:
+          - sudo apt-get install -y libio-socket-ssl-perl
           - cd fhem
           - cp ../README.md .
           - python setup.py install
@@ -23,12 +23,12 @@ matrix:
       python:
           - "2.7"
 
-      sudo: false
       cache:
           directories:
               - "~/selftest"
 
       install:
+          - sudo apt-get install -y libio-socket-ssl-perl
           - cd fhem
           - cp ../README.md .
           - python setup.py install
