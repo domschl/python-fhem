@@ -11,7 +11,7 @@ matrix:
               - "~/selftest"
 
       install:
-          - pip install https://github.com/domschl/python-fhem/archive/master.zip
+          - pip install fhem
           
       script:
           - cd selftest && python selftest.py
@@ -26,7 +26,7 @@ matrix:
               - "~/selftest"
 
       install:
-          - pip install https://github.com/domschl/python-fhem/archive/master.zip
+          - pip install fhem
 
       script:
           - cd selftest && python selftest.py
