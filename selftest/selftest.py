@@ -75,9 +75,11 @@ class FhemSelfTester:
         if not os.path.exists(archivename):
             self.log.error("Archive {} not found.".format(archivename))
             return False
-        if "fhem" not in destination or not os.path.exists(sanity_check_file):
+        if "fhem" not in destination or (os.path.exists(destination) and not os.path.exists(sanity_check_file)):
             self.log.error(
                 "Dangerous or inconsistent fhem install-path: {}, need destination with 'fhem' in name.".format(destination))
+            self.log.error(
+                "Or {} exists and sanity-check-file {} doesn't exist.".format(destination, sanity_check_file))
             return False
         if os.path.exists(destination):
             try:
