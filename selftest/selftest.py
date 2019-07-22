@@ -144,6 +144,8 @@ if __name__ == '__main__':
         'urlpath': "https://fhem.de/fhem-5.9.tar.gz",
         'destination': "./fhem",
         'fhem_file': "./fhem/fhem-5.9/fhem.pl",
+        'config_file': "./fhem/fhem-5.9/fhem.cfg",
+        'fhem_dir': "./fhem/fhem-5.9/",
         'exec': "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
         'testhost': 'localhost',
         'protocol': 'http',
@@ -171,6 +173,12 @@ if __name__ == '__main__':
     if not st.install(config['archivename'], config['destination'], config['fhem_file']):
         print("Install failed")
         sys.exit(-2)
+
+    os.system('cat fhem-config-addon.cfg >> {}'.format(config['config_file']))
+
+    certs_dir = os.path.join(config['fhem_dir'], 'certs')
+    os.system('mkdir {}'.format(certs_dir))
+    os.system('cd {} && openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com"'.format(certs_dir))
 
     os.system(config['exec'])
     time.sleep(1)
@@ -205,6 +213,18 @@ if __name__ == '__main__':
                 print("Failed to set and read reading! {},{} != {}".format(
                     dev['name'], rd, dev['readings'][rd]))
                 sys.exit(-5)
+
+    num_temps = 0
+    for dev in devs:
+        if 'temperature' in dev['readings']:
+            num_temps += 1
+    temps = fh.get_readings("temperature")
+    if len(temps) != num_temps:
+        print("There should have been {} devices with temperature reading, but we got {}.".format(
+            num_temps, len(temps)))
+        sys.exit(-6)
+    else:
+        print("Multiread of all devices with 'temperature' reading:   ok.")
 
     fh.close()
 
