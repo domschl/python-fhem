@@ -51,7 +51,7 @@ class FhemSelfTester:
             self.log.error("Failed to write {}, {}".format(filename, e))
         return True
 
-    def install(self, archivename, destination):
+    def install(self, archivename, destination, sanity_check_file):
         if not archivename.endswith("tar.gz"):
             self.log.error(
                 "Archive needs to be of type *.tar.gz: {}".format(archivename))
@@ -59,7 +59,7 @@ class FhemSelfTester:
         if not os.path.exists(archivename):
             self.log.error("Archive {} not found.".format(archivename))
             return False
-        if "fhem" not in destination:
+        if "fhem" not in destination or not os.path.exists(sanity_check_file):
             self.log.error(
                 "Dangerous or inconsistent fhem install-path: {}, need destination with 'fhem' in name.".format(destination))
             return False
@@ -103,6 +103,7 @@ if __name__ == '__main__':
         'archivename': "./fhem-5.9.tar.gz",
         'urlpath': "https://fhem.de/fhem-5.9.tar.gz",
         'destination': "./fhem",
+        'fhem_file': "./fhem/fhem-5.9/fhem.pl",
         'exec': "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
         'testhost': 'localhost',
         'protocol': 'http',
@@ -123,7 +124,7 @@ if __name__ == '__main__':
         print("Download failed.")
         sys.exit(-1)
 
-    if not st.install(config['archivename'], config['destination']):
+    if not st.install(config['archivename'], config['destination'], config['fhem_file']):
         print("Install failed")
         sys.exit(-2)
 
@@ -135,5 +136,22 @@ if __name__ == '__main__':
         sys.exit(-4)
 
     print("Install should be ok, Fhem running.")
+
+    fh = fhem.Fhem(config['testhost'], protocol='http', port=8083)
+    fh.send_cmd("define grotzel dummy")
+    fh.send_cmd("attr grotzel setList state:on,off")
+    fh.send_cmd("set grotzel on")
+    fh.send_cmd("attr grotzel readingList temperature humidity")
+    fh.send_cmd("setreading grotzel temperature 10.2")
+    fh.send_cmd("setreading grotzel humidity 88.9")
+
+    temp = fh.get_dev_reading("grotzel", "temperature")
+    if temp == 10.2:
+        print("Reading-test ok.")
+    else:
+        print("Failed to set and read dummy reading!")
+        sys.exit(-5)
+
+    fh.close()
 
     sys.exit(0)
