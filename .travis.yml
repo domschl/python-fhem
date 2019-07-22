@@ -11,10 +11,11 @@ matrix:
               - "~/selftest"
 
       install:
-          - cd fhem && pip install -e . && cd ..
+          - cp ~/README.md ~/fhem
+          - cd ~/fhem && pip install -e .
           
       script:
-          - cd selftest && python selftest.py
+          - cd ~/selftest && python selftest.py
 
     - language: python
       python:
@@ -26,8 +27,9 @@ matrix:
               - "~/selftest"
 
       install:
-          - cd fhem && pip install -e . && cd ..
+          - cp ~/README.md ~/fhem
+          - cd ~/fhem && pip install -e .
 
       script:
-          - cd selftest && python selftest.py
+          - cd ~/selftest && python selftest.py
 
