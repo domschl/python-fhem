@@ -7,7 +7,7 @@
 
 Python FHEM (home automation server) API
 
-Simple API to connect to the FHEM home automation server via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
+Simple API to connect to the [FHEM home automation server](https://fhem.de/) via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
 **Note:** Python 2.x deprecation warning. `python-fhem` versions 0.6.x will be the last versions supporting Python 2.x.
 
@@ -79,7 +79,12 @@ fh = fhem.Fhem("myserver.home.org", protocol="http", port=8083)
 fh.send_cmd("set lamp on")
 # Get temperatur of LivingThermometer
 temp = fh.get_device_reading("LivingThermometer", "temperature")
-# Get a dict of kitchen lights with light on
+# return a dictionary with reading-value and time of last change:
+# {'Value': 25.6, 'Time': datetime.datetime(2019, 7, 27, 8, 19, 24)}
+print("The living-room temperature is {}, measured at {}".format(temp["Value"], temp["Time"]))
+# Output: The living-room temperature is 25.6, measured at 2019-07-27 08:19:24
+
+# Get a dict of kitchen lights with light on:
 lights = fh.get_states(group="Kitchen", state="on", device_type="light", value_only=True)
 # Get all data of specific tvs
 tvs = fh.get(device_type=["LGTV", "STV"])
@@ -152,4 +157,9 @@ while True:
 
 # Documentation
 
-see: [fhem documentation](https://domschl.github.io/python-fhem/index.html)
+see: [python-fhem documentation](https://domschl.github.io/python-fhem/index.html)
+
+# References
+
+* [Fhem home automation project page](https://fhem.de/)
+* [Fhem server wiki](https://wiki.fhem.de/)
