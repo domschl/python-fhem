@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import socket
+import errno
 import ssl
 import threading
 import time
@@ -75,7 +76,6 @@ class Fhem:
         self.bsock = None
         self.sock = None
         self.https_handler = None
-        self.max_socket_err_retry = 2
 
         # Set LogLevel
         # self.set_loglevel(loglevel)
@@ -322,24 +322,15 @@ class Fhem:
         if self.connection:
             self.sock.setblocking(False)
             data = b''
-            err_retry = 0
-            retry_state = True
-            while retry_state:
-                try:
-                    data = self.sock.recv(32000)
-                    retry_state = False
-                except socket.error as err:
-                    if err_retry>0:
-                        self.log.debug(
-                            "Exception in non-blocking (1). Error: {}".format(err))
-                    err_retry += 1
-                    if err_retry > self.max_socket_err_retry:
-                        retry_state=False
-                    else:
-                        time.sleep(timeout)
+            try:
+                data = self.sock.recv(32000)
+            except socket.error as err:
+                if err.errno != errno.EAGAIN :  # not 'Resource temporary unavailable, which is expected.
+                    self.log.debug(
+                        "Exception in non-blocking (1). Error: {}".format(err))
+                time.sleep(timeout)
 
             wok = 1
-            err_retry = 0
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
                 datai = b''
@@ -350,11 +341,11 @@ class Fhem:
                     else:
                         data += datai
                 except socket.error as err:
-                    if err_retry >= self.max_socket_err_retry:
-                        wok = 0
+                    # Resource temporarily unavailable, operation did not complete are expected
+                    if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:  
                         self.log.debug(
                             "Exception in non-blocking (2). Error: {}".format(err))
-                    err_retry += 1
+                    wok = 0
             self.sock.setblocking(True)
         return data
 
@@ -690,7 +681,7 @@ class FhemEventQueue:
 
     def __init__(self, server, que, port=7072, protocol='telnet',
                  use_ssl=False, username="", password="", csrf=True, cafile="",
-                 filterlist=None, timeout=0.1,
+                 filterlist=None, timeout=0.2,
                  eventtimeout=60, serverregex=None, loglevel=1):
         '''
         Construct an event queue object, FHEM events will be queued into the queue given at initialization.
@@ -713,6 +704,7 @@ class FhemEventQueue:
         # self.set_loglevel(loglevel)
         self.log = logging.getLogger('FhemEventQueue')
         self.informcmd = "inform timer"
+        self.timeout = timeout
         if serverregex is not None:
             self.informcmd += " " + serverregex
         if protocol != 'telnet':
@@ -746,18 +738,28 @@ class FhemEventQueue:
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
                              eventtimeout=120):
+        self.log.debug("FhemEventQueue worker thread starting...")
+        if self.fhem.connected() is not True:
+            self.log.warning("EventQueueThread: Fhem is not connected!")
         self.fhem.send_cmd(self.informcmd)
         data = ""
+        first = True
         lastreceive = time.time()
-        eventThreadActive = True
-        while eventThreadActive is True:
+        self.eventThreadActive = True
+        while self.eventThreadActive is True:
             while self.fhem.connected() is not True:
                 self.fhem.connect()
                 if self.fhem.connected():
+                    time.sleep(timeout)
                     lastreceive = time.time()
+                    self.fhem.send_cmd(self.informcmd)
                 else:
+                    self.log.warning("Fhem is not connected in EventQueue thread, retrying!")
                     time.sleep(5.0)
-
+            if first is True:
+                first = False
+                self.log.debug("FhemEventQueue worker thread active.")
+                time.sleep(timeout)
             if time.time() - lastreceive > eventtimeout:
                 self.log.debug("Event-timeout, refreshing INFORM TIMER")
                 self.fhem.send_cmd(self.informcmd)
@@ -832,10 +834,13 @@ class FhemEventQueue:
                                         'unit': unit
                                     }
                                     que.put(ev)
+                                    self.log.debug("Event queued for {}".format(ev['device']))
             time.sleep(timeout)
         self.fhem.close()
+        self.log.debug("FhemEventQueue worker thread terminated.")
         return
 
     def close(self):
         '''Stop event thread and close socket.'''
         self.eventThreadActive = False
+        time.sleep(0.5+self.timeout)
