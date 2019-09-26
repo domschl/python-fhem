@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import socket
+import errno
 import ssl
 import threading
 import time
@@ -32,7 +33,7 @@ except ImportError:
     from urllib2 import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.0'
+__version__ = '0.6.3'
 
 # create logger with 'python_fhem'
 # logger = logging.getLogger(__name__)
@@ -324,15 +325,16 @@ class Fhem:
             try:
                 data = self.sock.recv(32000)
             except socket.error as err:
-                self.log.debug(
-                    "Exception in non-blocking. Error: {}".format(err))
+                # Resource temporarily unavailable, operation did not complete are expected
+                if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:
+                    self.log.debug(
+                        "Exception in non-blocking (1). Error: {}".format(err))
                 time.sleep(timeout)
 
             wok = 1
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
                 datai = b''
-
                 try:
                     datai = self.sock.recv(32000)
                     if len(datai) == 0:
@@ -340,13 +342,15 @@ class Fhem:
                     else:
                         data += datai
                 except socket.error as err:
+                    # Resource temporarily unavailable, operation did not complete are expected
+                    if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:  
+                        self.log.debug(
+                            "Exception in non-blocking (2). Error: {}".format(err))
                     wok = 0
-                    self.log.debug(
-                        "Exception in non-blocking. Error: {}".format(err))
             self.sock.setblocking(True)
         return data
 
-    def send_recv_cmd(self, msg, timeout=0.1, blocking=True):
+    def send_recv_cmd(self, msg, timeout=0.1, blocking=False):
         '''
         Sends a command to the server and waits for an immediate reply.
 
@@ -364,7 +368,8 @@ class Fhem:
                 data = []
                 if blocking is True:
                     try:
-                        data = self.sock.recv(32000)
+                        # This causes failures if reply is larger!
+                        data = self.sock.recv(64000)
                     except socket.error:
                         self.log.error("Failed to recv msg. {}".format(data))
                         return {}
@@ -456,13 +461,13 @@ class Fhem:
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
                 result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
-                                     'Value' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Value' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))} fixes #14
             elif time_only:
                 result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
-                                     'Time' in v and (not len(arg) or (len(arg) and k in arg[0]))}
+                                     'Time' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             else:
                 result[r['Name']] = {k: v for k, v in r[value].items() if
-                                     (not len(arg) or (len(arg) and k in arg[0]))}
+                                     (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
             if not result[r['Name']]:
                 result.pop(r['Name'], None)
             elif len(result[r['Name']].values()) == 1:
@@ -504,7 +509,7 @@ class Fhem:
                 self._convert_data(response, i, v)
 
     def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
-            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, raw_result=None):
+            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, blocking=False, raw_result=None):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -525,6 +530,7 @@ class Fhem:
         :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {"battery": "ok"}
         :param raw_result: On True: Don't convert to python types and send full FHEM response
         :param timeout: timeout for reply
+        :param blocking: telnet socket mode, default blocking=False
         :return: dict of FHEM devices
         """
         if not self.connected():
@@ -546,7 +552,12 @@ class Fhem:
                     filter_list.append("{}{}{}".format(
                         key, "=" if case_sensitive else "~", value))
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
-            result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
+            if self.protocol == 'telnet':
+                result = self.send_recv_cmd(
+                    cmd, blocking=blocking, timeout=timeout)
+            else:
+                result = self.send_recv_cmd(
+                    cmd, blocking=False, timeout=timeout)
             if not result or raw_result:
                 return result
             result = result['Results']
@@ -694,6 +705,7 @@ class FhemEventQueue:
         # self.set_loglevel(loglevel)
         self.log = logging.getLogger('FhemEventQueue')
         self.informcmd = "inform timer"
+        self.timeout = timeout
         if serverregex is not None:
             self.informcmd += " " + serverregex
         if protocol != 'telnet':
@@ -702,6 +714,7 @@ class FhemEventQueue:
         self.fhem = Fhem(server=server, port=port, use_ssl=use_ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
+        time.sleep(timeout)
         self.EventThread = threading.Thread(target=self._event_worker_thread,
                                             args=(que, filterlist,
                                                   timeout, eventtimeout))
@@ -727,18 +740,29 @@ class FhemEventQueue:
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
                              eventtimeout=120):
+        self.log.debug("FhemEventQueue worker thread starting...")
+        if self.fhem.connected() is not True:
+            self.log.warning("EventQueueThread: Fhem is not connected!")
+        time.sleep(timeout)
         self.fhem.send_cmd(self.informcmd)
         data = ""
+        first = True
         lastreceive = time.time()
-        eventThreadActive = True
-        while eventThreadActive is True:
+        self.eventThreadActive = True
+        while self.eventThreadActive is True:
             while self.fhem.connected() is not True:
                 self.fhem.connect()
                 if self.fhem.connected():
+                    time.sleep(timeout)
                     lastreceive = time.time()
+                    self.fhem.send_cmd(self.informcmd)
                 else:
+                    self.log.warning("Fhem is not connected in EventQueue thread, retrying!")
                     time.sleep(5.0)
-
+            if first is True:
+                first = False
+                self.log.debug("FhemEventQueue worker thread active.")
+                time.sleep(timeout)
             if time.time() - lastreceive > eventtimeout:
                 self.log.debug("Event-timeout, refreshing INFORM TIMER")
                 self.fhem.send_cmd(self.informcmd)
@@ -755,9 +779,13 @@ class FhemEventQueue:
                         if len(li) > 4:
                             dd = li[0].split('-')
                             tt = li[1].split(':')
-                            dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                   int(dd[2]), int(tt[0]),
-                                                   int(tt[1]), int(tt[2]))
+                            try:
+                                dt = datetime.datetime(int(dd[0]), int(dd[1]),
+                                                    int(dd[2]), int(tt[0]),
+                                                    int(tt[1]), int(tt[2]))
+                            except:
+                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored".format(li[0],li[1],l))
+                                continue
                             devtype = li[2]
                             dev = li[3]
                             val = ''
@@ -809,10 +837,13 @@ class FhemEventQueue:
                                         'unit': unit
                                     }
                                     que.put(ev)
+                                    # self.log.debug("Event queued for {}".format(ev['device']))
             time.sleep(timeout)
         self.fhem.close()
+        self.log.debug("FhemEventQueue worker thread terminated.")
         return
 
     def close(self):
         '''Stop event thread and close socket.'''
         self.eventThreadActive = False
+        time.sleep(0.5+self.timeout)
