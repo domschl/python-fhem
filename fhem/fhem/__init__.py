@@ -75,6 +75,7 @@ class Fhem:
         self.bsock = None
         self.sock = None
         self.https_handler = None
+        self.max_socket_err_retry = 2
 
         # Set LogLevel
         # self.set_loglevel(loglevel)
@@ -321,18 +322,27 @@ class Fhem:
         if self.connection:
             self.sock.setblocking(False)
             data = b''
-            try:
-                data = self.sock.recv(32000)
-            except socket.error as err:
-                self.log.debug(
-                    "Exception in non-blocking. Error: {}".format(err))
-                time.sleep(timeout)
+            err_retry = 0
+            retry_state = True
+            while retry_state:
+                try:
+                    data = self.sock.recv(32000)
+                    retry_state = False
+                except socket.error as err:
+                    if err_retry>0:
+                        self.log.debug(
+                            "Exception in non-blocking (1). Error: {}".format(err))
+                    err_retry += 1
+                    if err_retry > self.max_socket_err_retry:
+                        retry_state=False
+                    else:
+                        time.sleep(timeout)
 
             wok = 1
+            err_retry = 0
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
                 datai = b''
-
                 try:
                     datai = self.sock.recv(32000)
                     if len(datai) == 0:
@@ -340,9 +350,11 @@ class Fhem:
                     else:
                         data += datai
                 except socket.error as err:
-                    wok = 0
-                    self.log.debug(
-                        "Exception in non-blocking. Error: {}".format(err))
+                    if err_retry >= self.max_socket_err_retry:
+                        wok = 0
+                        self.log.debug(
+                            "Exception in non-blocking (2). Error: {}".format(err))
+                    err_retry += 1
             self.sock.setblocking(True)
         return data
 
