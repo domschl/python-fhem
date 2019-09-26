@@ -774,9 +774,13 @@ class FhemEventQueue:
                         if len(li) > 4:
                             dd = li[0].split('-')
                             tt = li[1].split(':')
-                            dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                   int(dd[2]), int(tt[0]),
-                                                   int(tt[1]), int(tt[2]))
+                            try:
+                                dt = datetime.datetime(int(dd[0]), int(dd[1]),
+                                                    int(dd[2]), int(tt[0]),
+                                                    int(tt[1]), int(tt[2]))
+                            except:
+                                self.log.debug("EventQueue: invalid date format in date={} time={}".format(li[0]),li[1])
+                                continue
                             devtype = li[2]
                             dev = li[3]
                             val = ''
