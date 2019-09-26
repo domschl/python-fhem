@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>__init__ &#8212; fhem 0.6.2 documentation</title>
+    <title>__init__ &#8212; fhem 0.6.3 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -37,6 +37,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">ssl</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -65,7 +66,7 @@
     <span class="kn">from</span> <span class="nn">urllib2</span> <span class="k">import</span> <span class="n">install_opener</span>
 
 <span class="c1"># needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)</span>
-<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.6.0&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.6.3&#39;</span>
 
 <span class="c1"># create logger with &#39;python_fhem&#39;</span>
 <span class="c1"># logger = logging.getLogger(__name__)</span>
@@ -357,15 +358,16 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+                <span class="c1"># Resource temporarily unavailable, operation did not complete are expected</span>
+                <span class="k">if</span> <span class="n">err</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EAGAIN</span> <span class="ow">and</span> <span class="n">err</span><span class="o">.</span><span class="n">errno</span><span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Exception in non-blocking (1). Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
 
             <span class="n">wok</span> <span class="o">=</span> <span class="mi">1</span>
             <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">wok</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
                 <span class="n">datai</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
-
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">datai</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datai</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -373,13 +375,15 @@
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">data</span> <span class="o">+=</span> <span class="n">datai</span>
                 <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="c1"># Resource temporarily unavailable, operation did not complete are expected</span>
+                    <span class="k">if</span> <span class="n">err</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EAGAIN</span> <span class="ow">and</span> <span class="n">err</span><span class="o">.</span><span class="n">errno</span><span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>  
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="s2">&quot;Exception in non-blocking (2). Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
                     <span class="n">wok</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                        <span class="s2">&quot;Exception in non-blocking. Error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
 
-<div class="viewcode-block" id="Fhem.send_recv_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_recv_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_recv_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Fhem.send_recv_cmd"><a class="viewcode-back" href="../index.html#__init__.Fhem.send_recv_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">send_recv_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Sends a command to the server and waits for an immediate reply.</span>
 
@@ -397,7 +401,8 @@
                 <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">if</span> <span class="n">blocking</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="k">try</span><span class="p">:</span>
-                        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32000</span><span class="p">)</span>
+                        <span class="c1"># This causes failures if reply is larger!</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">64000</span><span class="p">)</span>
                     <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to recv msg. </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
                         <span class="k">return</span> <span class="p">{}</span>
@@ -489,13 +494,13 @@
             <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">arg</span>
             <span class="k">if</span> <span class="n">value_only</span><span class="p">:</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
-                                     <span class="s1">&#39;Value&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+                                     <span class="s1">&#39;Value&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>  <span class="c1"># k in arg[0]))} fixes #14</span>
             <span class="k">elif</span> <span class="n">time_only</span><span class="p">:</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
-                                     <span class="s1">&#39;Time&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+                                     <span class="s1">&#39;Time&#39;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>  <span class="c1"># k in arg[0]))}</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="n">value</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span>
-                                     <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>
+                                     <span class="p">(</span><span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]))}</span>  <span class="c1"># k in arg[0]))}</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]:</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -537,7 +542,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_convert_data</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Fhem.get"><a class="viewcode-back" href="../index.html#__init__.Fhem.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">room</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">not_room</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">not_room</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">raw_result</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get FHEM data of devices, can filter by parameters or custom defined filters.</span>
 <span class="sd">        All filters use regular expressions (except full match), so don&#39;t forget escaping.</span>
@@ -558,6 +563,7 @@
 <span class="sd">        :param filters: dict of filters - key=attribute/internal/reading, value=regex for value, e.g. {&quot;battery&quot;: &quot;ok&quot;}</span>
 <span class="sd">        :param raw_result: On True: Don&#39;t convert to python types and send full FHEM response</span>
 <span class="sd">        :param timeout: timeout for reply</span>
+<span class="sd">        :param blocking: telnet socket mode, default blocking=False</span>
 <span class="sd">        :return: dict of FHEM devices</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
@@ -579,7 +585,12 @@
                     <span class="n">filter_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">key</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span> <span class="k">if</span> <span class="n">case_sensitive</span> <span class="k">else</span> <span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
             <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;jsonlist2 </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;:FILTER=&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filter_list</span><span class="p">))</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span>
+                    <span class="n">cmd</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_recv_cmd</span><span class="p">(</span>
+                    <span class="n">cmd</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="n">raw_result</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">result</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;Results&#39;</span><span class="p">]</span>
@@ -727,6 +738,7 @@
         <span class="c1"># self.set_loglevel(loglevel)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;FhemEventQueue&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span> <span class="o">=</span> <span class="s2">&quot;inform timer&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="k">if</span> <span class="n">serverregex</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">serverregex</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="o">!=</span> <span class="s1">&#39;telnet&#39;</span><span class="p">:</span>
@@ -735,6 +747,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span> <span class="o">=</span> <span class="n">Fhem</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">use_ssl</span><span class="o">=</span><span class="n">use_ssl</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span>
                          <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">cafile</span><span class="o">=</span><span class="n">cafile</span><span class="p">,</span> <span class="n">loglevel</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">EventThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_event_worker_thread</span><span class="p">,</span>
                                             <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">que</span><span class="p">,</span> <span class="n">filterlist</span><span class="p">,</span>
                                                   <span class="n">timeout</span><span class="p">,</span> <span class="n">eventtimeout</span><span class="p">))</span>
@@ -760,18 +773,29 @@
 
     <span class="k">def</span> <span class="nf">_event_worker_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">que</span><span class="p">,</span> <span class="n">filterlist</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                              <span class="n">eventtimeout</span><span class="o">=</span><span class="mi">120</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;FhemEventQueue worker thread starting...&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;EventQueueThread: Fhem is not connected!&quot;</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">lastreceive</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">eventThreadActive</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">while</span> <span class="n">eventThreadActive</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eventThreadActive</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">eventThreadActive</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connected</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">connected</span><span class="p">():</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
                     <span class="n">lastreceive</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Fhem is not connected in EventQueue thread, retrying!&quot;</span><span class="p">)</span>
                     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>
-
+            <span class="k">if</span> <span class="n">first</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;FhemEventQueue worker thread active.&quot;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">lastreceive</span> <span class="o">&gt;</span> <span class="n">eventtimeout</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Event-timeout, refreshing INFORM TIMER&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">send_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">informcmd</span><span class="p">)</span>
@@ -788,9 +812,13 @@
                         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">li</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
                             <span class="n">dd</span> <span class="o">=</span> <span class="n">li</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
                             <span class="n">tt</span> <span class="o">=</span> <span class="n">li</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
-                            <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-                                                   <span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-                                                   <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                                                    <span class="nb">int</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                                                    <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                            <span class="k">except</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;EventQueue: invalid date format in date=</span><span class="si">{}</span><span class="s2"> time=</span><span class="si">{}</span><span class="s2">, event </span><span class="si">{}</span><span class="s2"> ignored&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">li</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">li</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">l</span><span class="p">))</span>
+                                <span class="k">continue</span>
                             <span class="n">devtype</span> <span class="o">=</span> <span class="n">li</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
                             <span class="n">dev</span> <span class="o">=</span> <span class="n">li</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
                             <span class="n">val</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -842,13 +870,16 @@
                                         <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="n">unit</span>
                                     <span class="p">}</span>
                                     <span class="n">que</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">ev</span><span class="p">)</span>
+                                    <span class="c1"># self.log.debug(&quot;Event queued for {}&quot;.format(ev[&#39;device&#39;]))</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fhem</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;FhemEventQueue worker thread terminated.&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
 <div class="viewcode-block" id="FhemEventQueue.close"><a class="viewcode-back" href="../index.html#__init__.FhemEventQueue.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Stop event thread and close socket.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eventThreadActive</span> <span class="o">=</span> <span class="kc">False</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eventThreadActive</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -903,7 +934,7 @@
       &copy;2018-2019, Dominik Schlösser and contributors.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.1.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
