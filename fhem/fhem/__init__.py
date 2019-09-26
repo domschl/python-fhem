@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import socket
+import errno
 import ssl
 import threading
 import time
@@ -324,15 +325,16 @@ class Fhem:
             try:
                 data = self.sock.recv(32000)
             except socket.error as err:
-                self.log.debug(
-                    "Exception in non-blocking. Error: {}".format(err))
+                # Resource temporarily unavailable, operation did not complete are expected
+                if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:
+                    self.log.debug(
+                        "Exception in non-blocking (1). Error: {}".format(err))
                 time.sleep(timeout)
 
             wok = 1
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
                 datai = b''
-
                 try:
                     datai = self.sock.recv(32000)
                     if len(datai) == 0:
@@ -340,9 +342,11 @@ class Fhem:
                     else:
                         data += datai
                 except socket.error as err:
+                    # Resource temporarily unavailable, operation did not complete are expected
+                    if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:  
+                        self.log.debug(
+                            "Exception in non-blocking (2). Error: {}".format(err))
                     wok = 0
-                    self.log.debug(
-                        "Exception in non-blocking. Error: {}".format(err))
             self.sock.setblocking(True)
         return data
 
@@ -701,6 +705,7 @@ class FhemEventQueue:
         # self.set_loglevel(loglevel)
         self.log = logging.getLogger('FhemEventQueue')
         self.informcmd = "inform timer"
+        self.timeout = timeout
         if serverregex is not None:
             self.informcmd += " " + serverregex
         if protocol != 'telnet':
@@ -709,6 +714,7 @@ class FhemEventQueue:
         self.fhem = Fhem(server=server, port=port, use_ssl=use_ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
+        time.sleep(timeout)
         self.EventThread = threading.Thread(target=self._event_worker_thread,
                                             args=(que, filterlist,
                                                   timeout, eventtimeout))
@@ -734,18 +740,29 @@ class FhemEventQueue:
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
                              eventtimeout=120):
+        self.log.debug("FhemEventQueue worker thread starting...")
+        if self.fhem.connected() is not True:
+            self.log.warning("EventQueueThread: Fhem is not connected!")
+        time.sleep(timeout)
         self.fhem.send_cmd(self.informcmd)
         data = ""
+        first = True
         lastreceive = time.time()
-        eventThreadActive = True
-        while eventThreadActive is True:
+        self.eventThreadActive = True
+        while self.eventThreadActive is True:
             while self.fhem.connected() is not True:
                 self.fhem.connect()
                 if self.fhem.connected():
+                    time.sleep(timeout)
                     lastreceive = time.time()
+                    self.fhem.send_cmd(self.informcmd)
                 else:
+                    self.log.warning("Fhem is not connected in EventQueue thread, retrying!")
                     time.sleep(5.0)
-
+            if first is True:
+                first = False
+                self.log.debug("FhemEventQueue worker thread active.")
+                time.sleep(timeout)
             if time.time() - lastreceive > eventtimeout:
                 self.log.debug("Event-timeout, refreshing INFORM TIMER")
                 self.fhem.send_cmd(self.informcmd)
@@ -762,9 +779,13 @@ class FhemEventQueue:
                         if len(li) > 4:
                             dd = li[0].split('-')
                             tt = li[1].split(':')
-                            dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                   int(dd[2]), int(tt[0]),
-                                                   int(tt[1]), int(tt[2]))
+                            try:
+                                dt = datetime.datetime(int(dd[0]), int(dd[1]),
+                                                    int(dd[2]), int(tt[0]),
+                                                    int(tt[1]), int(tt[2]))
+                            except:
+                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored".format(li[0],li[1],l))
+                                continue
                             devtype = li[2]
                             dev = li[3]
                             val = ''
@@ -816,10 +837,13 @@ class FhemEventQueue:
                                         'unit': unit
                                     }
                                     que.put(ev)
+                                    # self.log.debug("Event queued for {}".format(ev['device']))
             time.sleep(timeout)
         self.fhem.close()
+        self.log.debug("FhemEventQueue worker thread terminated.")
         return
 
     def close(self):
         '''Stop event thread and close socket.'''
         self.eventThreadActive = False
+        time.sleep(0.5+self.timeout)

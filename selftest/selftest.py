@@ -6,6 +6,13 @@ import time
 
 try:
     # Python 3.x
+    import queue
+except:
+    # Python 2.x
+    import Queue as queue
+
+try:
+    # Python 3.x
     from urllib.parse import quote
     from urllib.parse import urlencode
     from urllib.request import urlopen
@@ -121,21 +128,26 @@ class FhemSelfTester:
         self.log.warning("Fhem shutdown complete.")
 
 
-def create_device(fhem, name, readings):
-    fhem.send_cmd("define {} dummy".format(name))
-    fh.send_cmd("attr {} setList state:on,off".format(name))
-    fh.send_cmd("set {} on".format(name))
+def set_reading(fhi, name, reading, value):
+    fhi.send_cmd("setreading {} {} {}".format(name, reading, value))
+
+def create_device(fhi, name, readings):
+    fhi.send_cmd("define {} dummy".format(name))
+    fhi.send_cmd("attr {} setList state:on,off".format(name))
+    fhi.send_cmd("set {} on".format(name))
     readingList = ""
     for rd in readings:
         if readingList != "":
             readingList += " "
         readingList += rd
-    fh.send_cmd("attr {} readingList {}".format(name, readingList))
+    fhi.send_cmd("attr {} readingList {}".format(name, readingList))
     for rd in readings:
-        fh.send_cmd("setreading {} {} {}".format(name, rd, readings[rd]))
+        set_reading(fhi,name,rd,readings[rd])
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s.%(msecs)03d %(levelname)s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     print("Start FhemSelfTest")
     st = FhemSelfTester()
     print("State 1: Object created.")
@@ -191,11 +203,11 @@ if __name__ == '__main__':
         {'protocol': 'http',
          'port': 8083},
         {'protocol': 'telnet',
-         'port': 7072},
-        {'protocol': 'telnet',
          'port': 7073,
          'use_ssl': True,
          'password': 'secretsauce'},
+        {'protocol': 'telnet',
+         'port': 7072},
         {'protocol': 'https',
          'port': 8084},
         {'protocol': 'https',
@@ -205,7 +217,9 @@ if __name__ == '__main__':
     ]
 
     first = True
-
+    print("")
+    print("----------------- Fhem ------------")
+    print("Testing python-fhem Fhem():")
     for connection in connections:
         print('Testing connection to {} via {}'.format(
             config['testhost'], connection))
@@ -264,7 +278,62 @@ if __name__ == '__main__':
             sys.exit(-7)
         else:
             print("states received: {}, ok.".format(len(states)))
-
         fh.close()
+        print("")
+
+    print("")
+    print("---------------Queues--------------------------")
+    print("Testing python-fhem telnet FhemEventQueues():")
+    for connection in connections:
+        if connection['protocol'] != 'telnet':
+            continue
+        print('Testing connection to {} via {}'.format(
+            config['testhost'], connection))
+        fh = fhem.Fhem(config['testhost'], **connections[0])
+
+        que = queue.Queue()
+        que_events=0
+        fq = fhem.FhemEventQueue(config['testhost'], que, **connection)
+        
+        devs = [
+            {'name': 'clima_sensor1',
+             'readings': {'temperature': 18.2,
+                          'humidity': 88.2}},
+            {'name': 'clima_sensor2',
+             'readings': {'temperature': 19.1,
+                          'humidity': 85.7}}
+        ]
+        time.sleep(1.0)
+        for dev in devs:
+            for i in range(10):
+                print("Repetion: {}".format(i+1))
+                for rd in dev['readings']:
+                    set_reading(fh,dev['name'],rd,18.0+i/0.2)
+                    que_events += 1
+                    time.sleep(0.05)
+
+
+        time.sleep(3)  # This is crucial due to python's "thread"-handling.
+        ql = 0
+        has_data = True
+        while has_data:
+            try:
+                que.get(False)
+            except:
+                has_data = False
+                break
+            que.task_done()
+            ql += 1
+
+        print("Queue length: {}".format(ql))
+        if ql != que_events:
+            print("FhemEventQueue contains {} entries, expected {} entries, failure.".format(ql,que_events))
+            sys.exit(-8)
+        else:
+            print("Queue test success, Ok.")
+        fh.close()
+        fq.close()
+        time.sleep(0.5)
+        print("")
 
     sys.exit(0)
