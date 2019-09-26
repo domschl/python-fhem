@@ -325,7 +325,8 @@ class Fhem:
             try:
                 data = self.sock.recv(32000)
             except socket.error as err:
-                if err.errno != errno.EAGAIN :  # not 'Resource temporary unavailable, which is expected.
+                # Resource temporarily unavailable, operation did not complete are expected
+                if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:
                     self.log.debug(
                         "Exception in non-blocking (1). Error: {}".format(err))
                 time.sleep(timeout)
@@ -681,7 +682,7 @@ class FhemEventQueue:
 
     def __init__(self, server, que, port=7072, protocol='telnet',
                  use_ssl=False, username="", password="", csrf=True, cafile="",
-                 filterlist=None, timeout=0.2,
+                 filterlist=None, timeout=0.1,
                  eventtimeout=60, serverregex=None, loglevel=1):
         '''
         Construct an event queue object, FHEM events will be queued into the queue given at initialization.
@@ -713,6 +714,7 @@ class FhemEventQueue:
         self.fhem = Fhem(server=server, port=port, use_ssl=use_ssl, username=username,
                          password=password, cafile=cafile, loglevel=loglevel)
         self.fhem.connect()
+        time.sleep(timeout)
         self.EventThread = threading.Thread(target=self._event_worker_thread,
                                             args=(que, filterlist,
                                                   timeout, eventtimeout))
@@ -741,6 +743,7 @@ class FhemEventQueue:
         self.log.debug("FhemEventQueue worker thread starting...")
         if self.fhem.connected() is not True:
             self.log.warning("EventQueueThread: Fhem is not connected!")
+        time.sleep(timeout)
         self.fhem.send_cmd(self.informcmd)
         data = ""
         first = True

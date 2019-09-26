@@ -146,7 +146,8 @@ def create_device(fhi, name, readings):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s.%(msecs)03d %(levelname)s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     print("Start FhemSelfTest")
     st = FhemSelfTester()
     print("State 1: Object created.")
@@ -288,12 +289,12 @@ if __name__ == '__main__':
             continue
         print('Testing connection to {} via {}'.format(
             config['testhost'], connection))
-        fh = fhem.Fhem(config['testhost'], **connection)
+        fh = fhem.Fhem(config['testhost'], **connections[0])
 
         que = queue.Queue()
         que_events=0
         fq = fhem.FhemEventQueue(config['testhost'], que, **connection)
-
+        
         devs = [
             {'name': 'clima_sensor1',
              'readings': {'temperature': 18.2,
@@ -302,16 +303,17 @@ if __name__ == '__main__':
              'readings': {'temperature': 19.1,
                           'humidity': 85.7}}
         ]
-
+        time.sleep(1.0)
         for dev in devs:
             for i in range(10):
                 print("Repetion: {}".format(i+1))
                 for rd in dev['readings']:
                     set_reading(fh,dev['name'],rd,18.0+i/0.2)
                     que_events += 1
+                    time.sleep(0.05)
 
 
-        time.sleep(0.5)
+        time.sleep(3)  # This is crucial due to python's "thread"-handling.
         ql = 0
         has_data = True
         while has_data:
