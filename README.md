@@ -45,6 +45,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.3 (2019-09-26): Bug fixes for socket connection exceptions [#18](https://github.com/domschl/python-fhem/issues/18) by [TK67](https://forum.fhem.de/index.php/topic,63816.msg968089.html#msg968089) [FHEM forum] and EventQueue crashes in datetime parsing [#19](https://github.com/domschl/python-fhem/issues/19) by party-pansen. Self-test now also covers FhemEventQueue() class.
 * 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14). Default blocking mode for telnet has been set to non-blocking. This can be changed with parameter `blocking=True` (telnet only). Use of HTTP(S) is recommended (superior
 performance and faster)
 * [build environment] (2019-07-22): Initial support for TravisCI automated self-tests.
