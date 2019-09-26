@@ -837,7 +837,7 @@ class FhemEventQueue:
                                         'unit': unit
                                     }
                                     que.put(ev)
-                                    self.log.debug("Event queued for {}".format(ev['device']))
+                                    # self.log.debug("Event queued for {}".format(ev['device']))
             time.sleep(timeout)
         self.fhem.close()
         self.log.debug("FhemEventQueue worker thread terminated.")
