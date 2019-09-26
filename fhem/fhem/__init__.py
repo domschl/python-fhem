@@ -779,7 +779,7 @@ class FhemEventQueue:
                                                     int(dd[2]), int(tt[0]),
                                                     int(tt[1]), int(tt[2]))
                             except:
-                                self.log.debug("EventQueue: invalid date format in date={} time={}".format(li[0]),li[1])
+                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored".format(li[0]),li[1],l))
                                 continue
                             devtype = li[2]
                             dev = li[3]
