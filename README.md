@@ -2,6 +2,7 @@
 [![TravisCI Test Status](https://travis-ci.org/domschl/python-fhem.svg?branch=master)](https://travis-ci.org/domschl/python-fhem)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/116e9e988d934aaa9cfbfa5b8aef7f78)](https://www.codacy.com/app/dominik.schloesser/python-fhem?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=domschl/python-fhem&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://domschl.github.io/python-fhem/index.html)
 
 # python-fhem
 
