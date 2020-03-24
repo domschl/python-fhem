@@ -683,7 +683,7 @@ class FhemEventQueue:
     def __init__(self, server, que, port=7072, protocol='telnet',
                  use_ssl=False, username="", password="", csrf=True, cafile="",
                  filterlist=None, timeout=0.1,
-                 eventtimeout=60, serverregex=None, loglevel=1):
+                 eventtimeout=60, serverregex=None, loglevel=1, raw_value=False):
         '''
         Construct an event queue object, FHEM events will be queued into the queue given at initialization.
 
@@ -701,6 +701,7 @@ class FhemEventQueue:
         :param eventtimeout: larger timeout for server keep-alive messages
         :param serverregex: FHEM regex to restrict event messages on server side.
         :param loglevel: deprecated, will be removed. Use standard python logging function for logger 'FhemEventQueue', old: 0: no log, 1: errors, 2: info, 3: debug
+        :param raw_value: default False. On True, the value of a reading is not parsed for units, and returned as-is.
         '''
         # self.set_loglevel(loglevel)
         self.log = logging.getLogger('FhemEventQueue')
@@ -717,7 +718,7 @@ class FhemEventQueue:
         time.sleep(timeout)
         self.EventThread = threading.Thread(target=self._event_worker_thread,
                                             args=(que, filterlist,
-                                                  timeout, eventtimeout))
+                                                  timeout, eventtimeout, raw_value))
         self.EventThread.setDaemon(True)
         self.EventThread.start()
 
@@ -728,7 +729,7 @@ class FhemEventQueue:
         :param level: 0: critical, 1: errors, 2: info, 3: debug
         '''
         self.log.warning(
-            "Deprecation: please set logging levels using python's standard logging for logger 'Fhem'")
+            "Deprecation: please set logging levels using python's standard logging for logger 'FhemEventQueue'")
         if level == 0:
             self.log.setLevel(logging.CRITICAL)
         elif level == 1:
@@ -739,7 +740,7 @@ class FhemEventQueue:
             self.log.setLevel(logging.DEBUG)
 
     def _event_worker_thread(self, que, filterlist, timeout=0.1,
-                             eventtimeout=120):
+                             eventtimeout=120, raw_value=False):
         self.log.debug("FhemEventQueue worker thread starting...")
         if self.fhem.connected() is not True:
             self.log.warning("EventQueueThread: Fhem is not connected!")
@@ -793,6 +794,7 @@ class FhemEventQueue:
                                 val += li[i]
                                 if i < len(li) - 1:
                                     val += " "
+                            full_val=val
                             vl = val.split(" ")
                             val = ''
                             unit = ''
@@ -828,14 +830,24 @@ class FhemEventQueue:
                                         if adQt:
                                             adQ = True
                                 if adQ:
-                                    ev = {
-                                        'timestamp': dt,
-                                        'devicetype': devtype,
-                                        'device': dev,
-                                        'reading': read,
-                                        'value': val,
-                                        'unit': unit
-                                    }
+                                    if raw_value is False:
+                                        ev = {
+                                            'timestamp': dt,
+                                            'devicetype': devtype,
+                                            'device': dev,
+                                            'reading': read,
+                                            'value': val,
+                                            'unit': unit
+                                        }
+                                    else:
+                                         ev = {
+                                            'timestamp': dt,
+                                            'devicetype': devtype,
+                                            'device': dev,
+                                            'reading': read,
+                                            'value': full_val,
+                                            'unit': None
+                                        }
                                     que.put(ev)
                                     # self.log.debug("Event queued for {}".format(ev['device']))
             time.sleep(timeout)
