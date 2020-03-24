@@ -46,6 +46,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.5 (2020-03-24): New option `raw_value` for `FhemEventQueue`. Default `False` (old behavior), on `True`, the full, unparsed reading is returned, without looking for a unit.
 * 0.6.4 (2020-03-24): Bug fix for [#21](https://github.com/domschl/python-fhem/issues/21), Index out-of-range in event loop background thread for non-standard event formats.  
 * 0.6.3 (2019-09-26): Bug fixes for socket connection exceptions [#18](https://github.com/domschl/python-fhem/issues/18) by [TK67](https://forum.fhem.de/index.php/topic,63816.msg968089.html#msg968089) [FHEM forum] and EventQueue crashes in datetime parsing [#19](https://github.com/domschl/python-fhem/issues/19) by party-pansen. Self-test now also covers FhemEventQueue() class.
 * 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14). Default blocking mode for telnet has been set to non-blocking. This can be changed with parameter `blocking=True` (telnet only). Use of HTTP(S) is recommended (superior
