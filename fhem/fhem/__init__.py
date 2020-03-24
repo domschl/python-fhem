@@ -33,7 +33,7 @@ except ImportError:
     from urllib2 import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.3'
+__version__ = '0.6.4'
 
 # create logger with 'python_fhem'
 # logger = logging.getLogger(__name__)
@@ -797,7 +797,7 @@ class FhemEventQueue:
                             val = ''
                             unit = ''
                             if len(vl) > 0:
-                                if vl[0][-1] == ':':
+                                if len(vl[0])>0 and vl[0][-1] == ':':
                                     read = vl[0][:-1]
                                     if len(vl) > 1:
                                         val = vl[1]
