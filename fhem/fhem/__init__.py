@@ -33,7 +33,7 @@ except ImportError:
     from urllib2 import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.4'
+__version__ = '0.6.5'
 
 # create logger with 'python_fhem'
 # logger = logging.getLogger(__name__)
