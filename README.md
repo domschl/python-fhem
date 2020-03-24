@@ -2,6 +2,7 @@
 [![TravisCI Test Status](https://travis-ci.org/domschl/python-fhem.svg?branch=master)](https://travis-ci.org/domschl/python-fhem)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/116e9e988d934aaa9cfbfa5b8aef7f78)](https://www.codacy.com/app/dominik.schloesser/python-fhem?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=domschl/python-fhem&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://domschl.github.io/python-fhem/index.html)
 
 # python-fhem
 
@@ -45,6 +46,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.6.4 (2020-03-24): Bug fix for [#21](https://github.com/domschl/python-fhem/issues/21), Index out-of-range in event loop background thread for non-standard event formats.  
 * 0.6.3 (2019-09-26): Bug fixes for socket connection exceptions [#18](https://github.com/domschl/python-fhem/issues/18) by [TK67](https://forum.fhem.de/index.php/topic,63816.msg968089.html#msg968089) [FHEM forum] and EventQueue crashes in datetime parsing [#19](https://github.com/domschl/python-fhem/issues/19) by party-pansen. Self-test now also covers FhemEventQueue() class.
 * 0.6.2 (2019-06-06): Bug fix, get_device_reading() could return additional unrelated readings. [#14](https://github.com/domschl/python-fhem/issues/14). Default blocking mode for telnet has been set to non-blocking. This can be changed with parameter `blocking=True` (telnet only). Use of HTTP(S) is recommended (superior
 performance and faster)
@@ -112,7 +114,7 @@ fh = fhem.Fhem('myserver.home.org', port=8086, protocol='https',
 
 If no public certificate `cafile` is given, then self-signed certs are accepted.
 
-## Connect via default protocol telnet, default port 7072: (deprecated)
+### Connect via default protocol telnet, default port 7072: (deprecated)
 
 *Note*: Connection via telnet is not reliable for large requests, which
 includes everything that uses wildcard-funcionality.
@@ -132,7 +134,7 @@ if fh.connected():
 
 It is recommended to use HTTP(S) to connect to Fhem instead.
 
-### Event queues (currently telnet only)
+## Event queues (currently telnet only)
 
 The library can create an event queue that uses a background thread to receive
 and dispatch FHEM events:
