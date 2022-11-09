@@ -781,11 +781,23 @@ class FhemEventQueue:
                             dd = li[0].split('-')
                             tt = li[1].split(':')
                             try:
-                                dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                    int(dd[2]), int(tt[0]),
-                                                    int(tt[1]), int(tt[2]))
-                            except:
-                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored".format(li[0],li[1],l))
+                                if '.' in tt[2]:
+                                    secs = float(tt[2])
+                                    tt[2] = str(int(secs))
+                                    tt.append(str(int((secs-int(secs))*1000000)))
+                            except Exception as e:
+                                self.log.warning("EventQueue: us-Bugfix failed with {}".format(e))
+                            try:
+                                if len(tt) == 3:
+                                    dt = datetime.datetime(int(dd[0]), int(dd[1]),
+                                                           int(dd[2]), int(tt[0]),
+                                                           int(tt[1]), int(tt[2]))
+                                else:
+                                    dt = datetime.datetime(int(dd[0]), int(dd[1]),
+                                                           int(dd[2]), int(tt[0]),
+                                                           int(tt[1]), int(tt[2]), int(tt[3]))
+                            except Exception as e:
+                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored: {}".format(li[0], li[1], l, e))
                                 continue
                             devtype = li[2]
                             dev = li[3]
@@ -794,7 +806,7 @@ class FhemEventQueue:
                                 val += li[i]
                                 if i < len(li) - 1:
                                     val += " "
-                            full_val=val
+                            full_val = val
                             vl = val.split(" ")
                             val = ''
                             unit = ''
