@@ -267,7 +267,7 @@ if __name__ == "__main__":
             "password": "secretsauce",
         },
         {"protocol": "telnet", "port": 7072},
-        {"protocol": "https", "port": 8084},
+        {"protocol": "https", "port": 8086},
         {
             "protocol": "https",
             "port": 8085,
