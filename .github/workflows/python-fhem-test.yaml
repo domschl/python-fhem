@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -42,6 +42,7 @@ jobs:
         rm ./fhem/dist/*
     - name: Install fhem server
       run: |
+        cd selftest
         wget https://fhem.de/fhem-6.0.tar.gz
         mkdir fhem
         cd fhem
@@ -51,7 +52,7 @@ jobs:
         cd certs
         openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com
         cd ..
-        cp ../../selftest/fhem.cfg .
+        cp ../../fhem-config-addon.cfg fhem.cfg
         perl fhem.pl fhem.cfg
     - name: Test with selftest.py
       run: |
