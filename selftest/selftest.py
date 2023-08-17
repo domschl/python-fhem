@@ -163,7 +163,7 @@ if __name__ == "__main__":
         "fhem_file": "./fhem/fhem-6.0/fhem.pl",
         "config_file": "./fhem/fhem-6.0/fhem.cfg",
         "fhem_dir": "./fhem/fhem-6.0/",
-        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg",
+        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg &",
         "testhost": "localhost",
     }
 
