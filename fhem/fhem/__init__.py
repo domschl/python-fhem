@@ -1,4 +1,4 @@
-'''API for FHEM homeautomation server, supporting telnet or HTTP/HTTPS connections with authentication and CSRF-token support.'''
+"""API for FHEM homeautomation server, supporting telnet or HTTP/HTTPS connections with authentication and CSRF-token support."""
 import datetime
 import json
 import logging
@@ -9,44 +9,37 @@ import ssl
 import threading
 import time
 
-try:
-    # Python 3.x
-    from urllib.parse import quote
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
-    from urllib.error import URLError
-    from urllib.request import HTTPSHandler
-    from urllib.request import HTTPPasswordMgrWithDefaultRealm
-    from urllib.request import HTTPBasicAuthHandler
-    from urllib.request import build_opener
-    from urllib.request import install_opener
-except ImportError:
-    # Python 2.x
-    from urllib import urlencode
-    from urllib2 import quote
-    from urllib2 import urlopen
-    from urllib2 import URLError
-    from urllib2 import HTTPSHandler
-    from urllib2 import HTTPPasswordMgrWithDefaultRealm
-    from urllib2 import HTTPBasicAuthHandler
-    from urllib2 import build_opener
-    from urllib2 import install_opener
+from urllib.parse import quote
+from urllib.parse import urlencode
+from urllib.request import urlopen
+from urllib.error import URLError
+from urllib.request import HTTPSHandler
+from urllib.request import HTTPPasswordMgrWithDefaultRealm
+from urllib.request import HTTPBasicAuthHandler
+from urllib.request import build_opener
+from urllib.request import install_opener
 
 # needs to be in sync with setup.py and documentation (conf.py, branch gh-pages)
-__version__ = '0.6.5'
-
-# create logger with 'python_fhem'
-# logger = logging.getLogger(__name__)
+__version__ = "0.7.0"
 
 
 class Fhem:
-    '''Connects to FHEM via socket communication with optional SSL and password
-    support'''
+    """Connects to FHEM via socket communication with optional SSL and password
+    support"""
 
-    def __init__(self, server, port=7072,
-                 use_ssl=False, protocol="telnet", username="", password="", csrf=True,
-                 cafile="", loglevel=1):
-        '''
+    def __init__(
+        self,
+        server,
+        port=7072,
+        use_ssl=False,
+        protocol="telnet",
+        username="",
+        password="",
+        csrf=True,
+        cafile="",
+        loglevel=1,
+    ):
+        """
         Instantiate connector object.
 
         :param server: address of FHEM server
@@ -58,15 +51,15 @@ class Fhem:
         :param csrf: (http(s)) use csrf token (FHEM 5.8 and newer), default True
         :param cafile: path to public certificate of your root authority, if left empty, https protocol will ignore certificate checks.
         :param loglevel: deprecated, will be removed. Please use standard python logging API with logger 'Fhem'.
-        '''
+        """
         self.log = logging.getLogger("Fhem")
 
-        validprots = ['http', 'https', 'telnet']
+        validprots = ["http", "https", "telnet"]
         self.server = server
         self.port = port
         self.ssl = use_ssl
         self.csrf = csrf
-        self.csrftoken = ''
+        self.csrftoken = ""
         self.username = username
         self.password = password
         self.loglevel = loglevel
@@ -101,30 +94,32 @@ class Fhem:
             self._install_opener()
 
     def connect(self):
-        '''create socket connection to server (telnet protocol only)'''
-        if self.protocol == 'telnet':
+        """create socket connection to server (telnet protocol only)"""
+        if self.protocol == "telnet":
             try:
                 self.log.debug("Creating socket...")
                 if self.ssl:
-                    self.bsock = socket.socket(socket.AF_INET,
-                                               socket.SOCK_STREAM)
+                    self.bsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.sock = ssl.wrap_socket(self.bsock)
-                    self.log.info("Connecting to {}:{} with SSL (TLS)".format(
-                        self.server, self.port))
+                    self.log.info(
+                        "Connecting to {}:{} with SSL (TLS)".format(
+                            self.server, self.port
+                        )
+                    )
                 else:
-                    self.sock = socket.socket(socket.AF_INET,
-                                              socket.SOCK_STREAM)
-                    self.log.info("Connecting to {}:{} without SSL".format(
-                        self.server, self.port))
+                    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.log.info(
+                        "Connecting to {}:{} without SSL".format(self.server, self.port)
+                    )
 
                 self.sock.connect((self.server, self.port))
                 self.connection = True
-                self.log.info("Connected to {}:{}".format(
-                    self.server, self.port))
+                self.log.info("Connected to {}:{}".format(self.server, self.port))
             except socket.error:
                 self.connection = False
-                self.log.error("Failed to connect to {}:{}".format(
-                    self.server, self.port))
+                self.log.error(
+                    "Failed to connect to {}:{}".format(self.server, self.port)
+                )
                 return
 
             if self.password != "":
@@ -155,29 +150,30 @@ class Fhem:
                     stp = dat.find("csrf_")
                     if stp != -1:
                         token = dat[stp:]
-                        token = token[:token.find("'")]
+                        token = token[: token.find("'")]
                         self.csrftoken = token
                         self.connection = True
                     else:
                         self.log.error(
-                            "CSRF token requested for server that doesn't know CSRF")
+                            "CSRF token requested for server that doesn't know CSRF"
+                        )
                 else:
-                    self.log.error(
-                        "No valid answer on send when expecting csrf.")
+                    self.log.error("No valid answer on send when expecting csrf.")
             else:
                 self.connection = True
 
     def connected(self):
-        '''Returns True if socket/http(s) session is connected to server.'''
+        """Returns True if socket/http(s) session is connected to server."""
         return self.connection
 
     def set_loglevel(self, level):
-        '''Set logging level. [Deprecated, will be removed, use python logging.setLevel]
+        """Set logging level. [Deprecated, will be removed, use python logging.setLevel]
 
         :param level: 0: critical, 1: errors, 2: info, 3: debug
-        '''
+        """
         self.log.warning(
-            "Deprecation: please set logging levels using python's standard logging for logger 'Fhem'")
+            "Deprecation: please set logging levels using python's standard logging for logger 'Fhem'"
+        )
         if level == 0:
             self.log.setLevel(logging.CRITICAL)
         elif level == 1:
@@ -188,8 +184,8 @@ class Fhem:
             self.log.setLevel(logging.DEBUG)
 
     def close(self):
-        '''Closes socket connection. (telnet only)'''
-        if self.protocol == 'telnet':
+        """Closes socket connection. (telnet only)"""
+        if self.protocol == "telnet":
             if self.connected():
                 time.sleep(0.2)
                 self.sock.close()
@@ -204,8 +200,9 @@ class Fhem:
         self.opener = None
         if self.username != "":
             self.password_mgr = HTTPPasswordMgrWithDefaultRealm()
-            self.password_mgr.add_password(None, self.baseurlauth,
-                                           self.username, self.password)
+            self.password_mgr.add_password(
+                None, self.baseurlauth, self.username, self.password
+            )
             self.auth_handler = HTTPBasicAuthHandler(self.password_mgr)
         if self.ssl is True:
             if self.cafile == "":
@@ -218,8 +215,7 @@ class Fhem:
                 self.context.verify_mode = ssl.CERT_REQUIRED
             self.https_handler = HTTPSHandler(context=self.context)
             if self.username != "":
-                self.opener = build_opener(self.https_handler,
-                                           self.auth_handler)
+                self.opener = build_opener(self.https_handler, self.auth_handler)
             else:
                 self.opener = build_opener(self.https_handler)
         else:
@@ -230,14 +226,14 @@ class Fhem:
             install_opener(self.opener)
 
     def send(self, buf, timeout=10):
-        '''Sends a buffer to server
+        """Sends a buffer to server
 
-        :param buf: binary buffer'''
+        :param buf: binary buffer"""
         if len(buf) > 0:
             if not self.connected():
                 self.log.debug("Not connected, trying to connect...")
                 self.connect()
-        if self.protocol == 'telnet':
+        if self.protocol == "telnet":
             if self.connected():
                 self.log.debug("Connected, sending...")
                 try:
@@ -246,12 +242,16 @@ class Fhem:
                     return None
                 except OSError as err:
                     self.log.error(
-                        "Failed to send msg, len={}. Exception raised: {}".format(len(buf), err))
+                        "Failed to send msg, len={}. Exception raised: {}".format(
+                            len(buf), err
+                        )
+                    )
                     self.connection = None
                     return None
             else:
                 self.log.error(
-                    "Failed to send msg, len={}. Not connected.".format(len(buf)))
+                    "Failed to send msg, len={}. Not connected.".format(len(buf))
+                )
                 return None
         else:  # HTTP(S)
             paramdata = None
@@ -260,8 +260,8 @@ class Fhem:
                     self.log.error("CSRF token not available!")
                     self.connection = False
                 else:
-                    datas = {'fwcsrf': self.csrftoken}
-                    paramdata = urlencode(datas).encode('UTF-8')
+                    datas = {"fwcsrf": self.csrftoken}
+                    paramdata = urlencode(datas).encode("UTF-8")
 
             try:
                 self.log.debug("Cmd: {}".format(buf))
@@ -274,43 +274,45 @@ class Fhem:
                     ccmd = self.baseurltoken
 
                 self.log.info("Request: {}".format(ccmd))
-                if ccmd.lower().startswith('http'):
+                if ccmd.lower().startswith("http"):
                     ans = urlopen(ccmd, paramdata, timeout=timeout)
                 else:
                     self.log.error(
-                        "Invalid URL {}, Failed to send msg, len={}, {}".format(ccmd, len(buf), err))
+                        "Invalid URL {}, Failed to send msg, len={}, {}".format(
+                            ccmd, len(buf), err
+                        )
+                    )
                     return None
                 data = ans.read()
                 return data
             except URLError as err:
                 self.connection = False
-                self.log.error(
-                    "Failed to send msg, len={}, {}".format(len(buf), err))
+                self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
             except socket.timeout as err:
                 # Python 2.7 fix
-                self.log.error(
-                    "Failed to send msg, len={}, {}".format(len(buf), err))
+                self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
                 return None
 
     def send_cmd(self, msg, timeout=10.0):
-        '''Sends a command to server.
+        """Sends a command to server.
 
         :param msg: string with FHEM command, e.g. 'set lamp on'
         :param timeout: timeout on send (sec).
-        '''
+        """
         if not self.connected():
             self.connect()
         if not self.nolog:
             self.log.debug("Sending: {}".format(msg))
-        if self.protocol == 'telnet':
+        if self.protocol == "telnet":
             if self.connection:
                 msg = "{}\n".format(msg)
-                cmd = msg.encode('utf-8')
+                cmd = msg.encode("utf-8")
                 return self.send(cmd)
             else:
                 self.log.error(
-                    "Failed to send msg, len={}. Not connected.".format(len(msg)))
+                    "Failed to send msg, len={}. Not connected.".format(len(msg))
+                )
                 return None
         else:
             return self.send(msg, timeout=timeout)
@@ -318,23 +320,24 @@ class Fhem:
     def _recv_nonblocking(self, timeout=0.1):
         if not self.connected():
             self.connect()
-        data = b''
+        data = b""
         if self.connection:
             self.sock.setblocking(False)
-            data = b''
+            data = b""
             try:
                 data = self.sock.recv(32000)
             except socket.error as err:
                 # Resource temporarily unavailable, operation did not complete are expected
-                if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:
+                if err.errno != errno.EAGAIN and err.errno != errno.ENOENT:
                     self.log.debug(
-                        "Exception in non-blocking (1). Error: {}".format(err))
+                        "Exception in non-blocking (1). Error: {}".format(err)
+                    )
                 time.sleep(timeout)
 
             wok = 1
             while len(data) > 0 and wok > 0:
                 time.sleep(timeout)
-                datai = b''
+                datai = b""
                 try:
                     datai = self.sock.recv(32000)
                     if len(datai) == 0:
@@ -343,25 +346,26 @@ class Fhem:
                         data += datai
                 except socket.error as err:
                     # Resource temporarily unavailable, operation did not complete are expected
-                    if err.errno != errno.EAGAIN and err.errno!= errno.ENOENT:  
+                    if err.errno != errno.EAGAIN and err.errno != errno.ENOENT:
                         self.log.debug(
-                            "Exception in non-blocking (2). Error: {}".format(err))
+                            "Exception in non-blocking (2). Error: {}".format(err)
+                        )
                     wok = 0
             self.sock.setblocking(True)
         return data
 
     def send_recv_cmd(self, msg, timeout=0.1, blocking=False):
-        '''
+        """
         Sends a command to the server and waits for an immediate reply.
 
         :param msg: FHEM command (e.g. 'set lamp on')
         :param timeout: waiting time for reply
         :param blocking: (telnet only) on True: use blocking socket communication (bool)
-        '''
-        data = b''
+        """
+        data = b""
         if not self.connected():
             self.connect()
-        if self.protocol == 'telnet':
+        if self.protocol == "telnet":
             if self.connection:
                 self.send_cmd(msg)
                 time.sleep(timeout)
@@ -379,7 +383,8 @@ class Fhem:
                 self.sock.setblocking(True)
             else:
                 self.log.error(
-                    "Failed to send msg, len={}. Not connected.".format(len(msg)))
+                    "Failed to send msg, len={}. Not connected.".format(len(msg))
+                )
         else:
             data = self.send_cmd(msg)
             if data is None:
@@ -389,13 +394,14 @@ class Fhem:
             return {}
 
         try:
-            sdata = data.decode('utf-8')
+            sdata = data.decode("utf-8")
             jdata = json.loads(sdata)
         except Exception as err:
             self.log.error(
-                "Failed to decode json, exception raised. {} {}".format(data, err))
+                "Failed to decode json, exception raised. {} {}".format(data, err)
+            )
             return {}
-        if len(jdata[u'Results']) == 0:
+        if len(jdata["Results"]) == 0:
             self.log.error("Query had no result.")
             return {}
         else:
@@ -404,42 +410,54 @@ class Fhem:
 
     def get_dev_state(self, dev, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device('device') instead of get_dev_state")
+            "Deprecation: use get_device('device') instead of get_dev_state"
+        )
         return self.get_device(dev, timeout=timeout, raw_result=True)
 
     def get_dev_reading(self, dev, reading, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading")
+            "Deprecation: use get_device_reading('device', 'reading') instead of get_dev_reading"
+        )
         return self.get_device_reading(dev, reading, value_only=True, timeout=timeout)
 
     def getDevReadings(self, dev, reading, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings")
-        return self.get_device_reading(dev, timeout=timeout, value_only=True, raw_result=True)
+            "Deprecation: use get_device_reading('device', ['reading']) instead of getDevReadings"
+        )
+        return self.get_device_reading(
+            dev, timeout=timeout, value_only=True, raw_result=True
+        )
 
     def get_dev_readings(self, dev, readings, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings")
-        return self.get_device_reading(dev, readings, timeout=timeout, value_only=True, raw_result=True)
+            "Deprecation: use get_device_reading('device', ['reading']) instead of get_dev_readings"
+        )
+        return self.get_device_reading(
+            dev, readings, timeout=timeout, value_only=True, raw_result=True
+        )
 
     def get_dev_reading_time(self, dev, reading, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device_reading('device', 'reading', time_only=True) instead of get_dev_reading_time")
+            "Deprecation: use get_device_reading('device', 'reading', time_only=True) instead of get_dev_reading_time"
+        )
         return self.get_device_reading(dev, reading, timeout=timeout, time_only=True)
 
     def get_dev_readings_time(self, dev, readings, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get_device_reading('device', ['reading'], time_only=True) instead of get_dev_reading_time")
+            "Deprecation: use get_device_reading('device', ['reading'], time_only=True) instead of get_dev_reading_time"
+        )
         return self.get_device_reading(dev, readings, timeout=timeout, time_only=True)
 
     def getFhemState(self, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get() without parameters instead of getFhemState")
+            "Deprecation: use get() without parameters instead of getFhemState"
+        )
         return self.get(timeout=timeout, raw_result=True)
 
     def get_fhem_state(self, timeout=0.1):
         self.log.warning(
-            "Deprecation: use get() without parameters instead of get_fhem_state")
+            "Deprecation: use get() without parameters instead of get_fhem_state"
+        )
         return self.get(timeout=timeout, raw_result=True)
 
     @staticmethod
@@ -457,21 +475,32 @@ class Fhem:
             self.log.error("Too many positional arguments")
             return {}
         result = {}
-        for r in response if 'totalResultsReturned' not in response else response['Results']:
+        for r in (
+            response if "totalResultsReturned" not in response else response["Results"]
+        ):
             arg = [arg[0]] if len(arg) and isinstance(arg[0], str) else arg
             if value_only:
-                result[r['Name']] = {k: v['Value'] for k, v in r[value].items() if
-                                     'Value' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))} fixes #14
+                result[r["Name"]] = {
+                    k: v["Value"]
+                    for k, v in r[value].items()
+                    if "Value" in v and (not len(arg) or (len(arg) and k == arg[0]))
+                }  # k in arg[0]))} fixes #14
             elif time_only:
-                result[r['Name']] = {k: v['Time'] for k, v in r[value].items() if
-                                     'Time' in v and (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
+                result[r["Name"]] = {
+                    k: v["Time"]
+                    for k, v in r[value].items()
+                    if "Time" in v and (not len(arg) or (len(arg) and k == arg[0]))
+                }  # k in arg[0]))}
             else:
-                result[r['Name']] = {k: v for k, v in r[value].items() if
-                                     (not len(arg) or (len(arg) and k == arg[0]))}  # k in arg[0]))}
-            if not result[r['Name']]:
-                result.pop(r['Name'], None)
-            elif len(result[r['Name']].values()) == 1:
-                result[r['Name']] = list(result[r['Name']].values())[0]
+                result[r["Name"]] = {
+                    k: v
+                    for k, v in r[value].items()
+                    if (not len(arg) or (len(arg) and k == arg[0]))
+                }  # k in arg[0]))}
+            if not result[r["Name"]]:
+                result.pop(r["Name"], None)
+            elif len(result[r["Name"]].values()) == 1:
+                result[r["Name"]] = list(result[r["Name"]].values())[0]
         return result
 
     def _parse_filters(self, name, value, not_value, filter_list, case_sensitive):
@@ -479,8 +508,7 @@ class Fhem:
         if value:
             self._append_filter(name, value, compare, "{}{}{}", filter_list)
         elif not_value:
-            self._append_filter(name, not_value, compare,
-                                "{}!{}{}", filter_list)
+            self._append_filter(name, not_value, compare, "{}!{}{}", filter_list)
 
     def _convert_data(self, response, k, v):
         try:
@@ -492,9 +520,10 @@ class Fhem:
                 response[k] = int(v)
             elif re.findall(r"^[0-9]+\.[0-9]+$", v):
                 response[k] = float(v)
-            elif re.findall("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", v):
-                response[k] = datetime.datetime.strptime(
-                    v, '%Y-%m-%d %H:%M:%S')
+            elif re.findall(
+                "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", v
+            ):
+                response[k] = datetime.datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
         if isinstance(v, dict):
             self._parse_data_types(response[k])
         if isinstance(v, list):
@@ -508,8 +537,24 @@ class Fhem:
             for i, v in enumerate(response):
                 self._convert_data(response, i, v)
 
-    def get(self, name=None, state=None, group=None, room=None, device_type=None, not_name=None, not_state=None, not_group=None,
-            not_room=None, not_device_type=None, case_sensitive=None, filters=None, timeout=0.1, blocking=False, raw_result=None):
+    def get(
+        self,
+        name=None,
+        state=None,
+        group=None,
+        room=None,
+        device_type=None,
+        not_name=None,
+        not_state=None,
+        not_group=None,
+        not_room=None,
+        not_device_type=None,
+        case_sensitive=None,
+        filters=None,
+        timeout=0.1,
+        blocking=False,
+        raw_result=None,
+    ):
         """
         Get FHEM data of devices, can filter by parameters or custom defined filters.
         All filters use regular expressions (except full match), so don't forget escaping.
@@ -537,30 +582,26 @@ class Fhem:
             self.connect()
         if self.connected():
             filter_list = []
-            self._parse_filters("NAME", name, not_name,
-                                filter_list, case_sensitive)
-            self._parse_filters("STATE", state, not_state,
-                                filter_list, case_sensitive)
-            self._parse_filters("group", group, not_group,
-                                filter_list, case_sensitive)
-            self._parse_filters("room", room, not_room,
-                                filter_list, case_sensitive)
-            self._parse_filters("TYPE", device_type,
-                                not_device_type, filter_list, case_sensitive)
+            self._parse_filters("NAME", name, not_name, filter_list, case_sensitive)
+            self._parse_filters("STATE", state, not_state, filter_list, case_sensitive)
+            self._parse_filters("group", group, not_group, filter_list, case_sensitive)
+            self._parse_filters("room", room, not_room, filter_list, case_sensitive)
+            self._parse_filters(
+                "TYPE", device_type, not_device_type, filter_list, case_sensitive
+            )
             if filters:
                 for key, value in filters.items():
-                    filter_list.append("{}{}{}".format(
-                        key, "=" if case_sensitive else "~", value))
+                    filter_list.append(
+                        "{}{}{}".format(key, "=" if case_sensitive else "~", value)
+                    )
             cmd = "jsonlist2 {}".format(":FILTER=".join(filter_list))
-            if self.protocol == 'telnet':
-                result = self.send_recv_cmd(
-                    cmd, blocking=blocking, timeout=timeout)
+            if self.protocol == "telnet":
+                result = self.send_recv_cmd(cmd, blocking=blocking, timeout=timeout)
             else:
-                result = self.send_recv_cmd(
-                    cmd, blocking=False, timeout=timeout)
+                result = self.send_recv_cmd(cmd, blocking=False, timeout=timeout)
             if not result or raw_result:
                 return result
-            result = result['Results']
+            result = result["Results"]
             self._parse_data_types(result)
             return result
         else:
@@ -577,7 +618,11 @@ class Fhem:
         response = self.get(**kwargs)
         if not response:
             return response
-        return {r['Name']: r['Readings']['state']['Value'] for r in response if 'state' in r['Readings']}
+        return {
+            r["Name"]: r["Readings"]["state"]["Value"]
+            for r in response
+            if "state" in r["Readings"]
+        }
 
     def get_readings(self, *arg, **kwargs):
         """
@@ -589,12 +634,14 @@ class Fhem:
         :param kwargs: use keyword arguments from :py:meth:`Fhem.get` function
         :return: dict of FHEM devices with readings
         """
-        value_only = kwargs['value_only'] if 'value_only' in kwargs else None
-        time_only = kwargs['time_only'] if 'time_only' in kwargs else None
-        kwargs.pop('value_only', None)
-        kwargs.pop('time_only', None)
+        value_only = kwargs["value_only"] if "value_only" in kwargs else None
+        time_only = kwargs["time_only"] if "time_only" in kwargs else None
+        kwargs.pop("value_only", None)
+        kwargs.pop("time_only", None)
         response = self.get(**kwargs)
-        return self._response_filter(response, arg, 'Readings', value_only=value_only, time_only=time_only)
+        return self._response_filter(
+            response, arg, "Readings", value_only=value_only, time_only=time_only
+        )
 
     def get_attributes(self, *arg, **kwargs):
         """
@@ -605,7 +652,7 @@ class Fhem:
         :return: dict of FHEM devices with attributes
         """
         response = self.get(**kwargs)
-        return self._response_filter(response, arg, 'Attributes')
+        return self._response_filter(response, arg, "Attributes")
 
     def get_internals(self, *arg, **kwargs):
         """
@@ -616,7 +663,7 @@ class Fhem:
         :return: dict of FHEM devices with internals
         """
         response = self.get(**kwargs)
-        return self._response_filter(response, arg, 'Internals')
+        return self._response_filter(response, arg, "Internals")
 
     def get_device(self, device, **kwargs):
         """
@@ -677,14 +724,28 @@ class Fhem:
 
 
 class FhemEventQueue:
-    '''Creates a thread that listens to FHEM events and dispatches them to
-    a Python queue.'''
+    """Creates a thread that listens to FHEM events and dispatches them to
+    a Python queue."""
 
-    def __init__(self, server, que, port=7072, protocol='telnet',
-                 use_ssl=False, username="", password="", csrf=True, cafile="",
-                 filterlist=None, timeout=0.1,
-                 eventtimeout=60, serverregex=None, loglevel=1, raw_value=False):
-        '''
+    def __init__(
+        self,
+        server,
+        que,
+        port=7072,
+        protocol="telnet",
+        use_ssl=False,
+        username="",
+        password="",
+        csrf=True,
+        cafile="",
+        filterlist=None,
+        timeout=0.1,
+        eventtimeout=60,
+        serverregex=None,
+        loglevel=1,
+        raw_value=False,
+    ):
+        """
         Construct an event queue object, FHEM events will be queued into the queue given at initialization.
 
         :param server: FHEM server address
@@ -702,34 +763,43 @@ class FhemEventQueue:
         :param serverregex: FHEM regex to restrict event messages on server side.
         :param loglevel: deprecated, will be removed. Use standard python logging function for logger 'FhemEventQueue', old: 0: no log, 1: errors, 2: info, 3: debug
         :param raw_value: default False. On True, the value of a reading is not parsed for units, and returned as-is.
-        '''
+        """
         # self.set_loglevel(loglevel)
-        self.log = logging.getLogger('FhemEventQueue')
+        self.log = logging.getLogger("FhemEventQueue")
         self.informcmd = "inform timer"
         self.timeout = timeout
         if serverregex is not None:
             self.informcmd += " " + serverregex
-        if protocol != 'telnet':
+        if protocol != "telnet":
             self.log.error("ONLY TELNET is currently supported for EventQueue")
             return
-        self.fhem = Fhem(server=server, port=port, use_ssl=use_ssl, username=username,
-                         password=password, cafile=cafile, loglevel=loglevel)
+        self.fhem = Fhem(
+            server=server,
+            port=port,
+            use_ssl=use_ssl,
+            username=username,
+            password=password,
+            cafile=cafile,
+            loglevel=loglevel,
+        )
         self.fhem.connect()
         time.sleep(timeout)
-        self.EventThread = threading.Thread(target=self._event_worker_thread,
-                                            args=(que, filterlist,
-                                                  timeout, eventtimeout, raw_value))
+        self.EventThread = threading.Thread(
+            target=self._event_worker_thread,
+            args=(que, filterlist, timeout, eventtimeout, raw_value),
+        )
         self.EventThread.setDaemon(True)
         self.EventThread.start()
 
     def set_loglevel(self, level):
-        '''
+        """
         Set logging level, [Deprecated, will be removed, use python's logging.setLevel]
 
         :param level: 0: critical, 1: errors, 2: info, 3: debug
-        '''
+        """
         self.log.warning(
-            "Deprecation: please set logging levels using python's standard logging for logger 'FhemEventQueue'")
+            "Deprecation: please set logging levels using python's standard logging for logger 'FhemEventQueue'"
+        )
         if level == 0:
             self.log.setLevel(logging.CRITICAL)
         elif level == 1:
@@ -739,8 +809,9 @@ class FhemEventQueue:
         elif level == 3:
             self.log.setLevel(logging.DEBUG)
 
-    def _event_worker_thread(self, que, filterlist, timeout=0.1,
-                             eventtimeout=120, raw_value=False):
+    def _event_worker_thread(
+        self, que, filterlist, timeout=0.1, eventtimeout=120, raw_value=False
+    ):
         self.log.debug("FhemEventQueue worker thread starting...")
         if self.fhem.connected() is not True:
             self.log.warning("EventQueueThread: Fhem is not connected!")
@@ -758,7 +829,9 @@ class FhemEventQueue:
                     lastreceive = time.time()
                     self.fhem.send_cmd(self.informcmd)
                 else:
-                    self.log.warning("Fhem is not connected in EventQueue thread, retrying!")
+                    self.log.warning(
+                        "Fhem is not connected in EventQueue thread, retrying!"
+                    )
                     time.sleep(5.0)
             if first is True:
                 first = False
@@ -772,53 +845,70 @@ class FhemEventQueue:
 
             if self.fhem.connected() is True:
                 data = self.fhem._recv_nonblocking(timeout)
-                lines = data.decode('utf-8').split('\n')
+                lines = data.decode("utf-8").split("\n")
                 for l in lines:
                     if len(l) > 0:
                         lastreceive = time.time()
-                        li = l.split(' ')
+                        li = l.split(" ")
                         if len(li) > 4:
-                            dd = li[0].split('-')
-                            tt = li[1].split(':')
+                            dd = li[0].split("-")
+                            tt = li[1].split(":")
                             try:
-                                if '.' in tt[2]:
+                                if "." in tt[2]:
                                     secs = float(tt[2])
                                     tt[2] = str(int(secs))
-                                    tt.append(str(int((secs-int(secs))*1000000)))
+                                    tt.append(str(int((secs - int(secs)) * 1000000)))
                             except Exception as e:
-                                self.log.warning("EventQueue: us-Bugfix failed with {}".format(e))
+                                self.log.warning(
+                                    "EventQueue: us-Bugfix failed with {}".format(e)
+                                )
                             try:
                                 if len(tt) == 3:
-                                    dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                           int(dd[2]), int(tt[0]),
-                                                           int(tt[1]), int(tt[2]))
+                                    dt = datetime.datetime(
+                                        int(dd[0]),
+                                        int(dd[1]),
+                                        int(dd[2]),
+                                        int(tt[0]),
+                                        int(tt[1]),
+                                        int(tt[2]),
+                                    )
                                 else:
-                                    dt = datetime.datetime(int(dd[0]), int(dd[1]),
-                                                           int(dd[2]), int(tt[0]),
-                                                           int(tt[1]), int(tt[2]), int(tt[3]))
+                                    dt = datetime.datetime(
+                                        int(dd[0]),
+                                        int(dd[1]),
+                                        int(dd[2]),
+                                        int(tt[0]),
+                                        int(tt[1]),
+                                        int(tt[2]),
+                                        int(tt[3]),
+                                    )
                             except Exception as e:
-                                self.log.debug("EventQueue: invalid date format in date={} time={}, event {} ignored: {}".format(li[0], li[1], l, e))
+                                self.log.debug(
+                                    "EventQueue: invalid date format in date={} time={}, event {} ignored: {}".format(
+                                        li[0], li[1], l, e
+                                    )
+                                )
                                 continue
                             devtype = li[2]
                             dev = li[3]
-                            val = ''
+                            val = ""
                             for i in range(4, len(li)):
                                 val += li[i]
                                 if i < len(li) - 1:
                                     val += " "
                             full_val = val
                             vl = val.split(" ")
-                            val = ''
-                            unit = ''
+                            val = ""
+                            unit = ""
                             if len(vl) > 0:
-                                if len(vl[0])>0 and vl[0][-1] == ':':
+                                if len(vl[0]) > 0 and vl[0][-1] == ":":
                                     read = vl[0][:-1]
                                     if len(vl) > 1:
                                         val = vl[1]
                                     if len(vl) > 2:
                                         unit = vl[2]
                                 else:
-                                    read = 'STATE'
+                                    read = "STATE"
                                     if len(vl) > 0:
                                         val = vl[0]
                                     if len(vl) > 1:
@@ -830,13 +920,13 @@ class FhemEventQueue:
                                     for f in filterlist:
                                         adQt = True
                                         for c in f:
-                                            if c == 'devtype':
+                                            if c == "devtype":
                                                 if devtype != f[c]:
                                                     adQt = False
-                                            if c == 'device':
+                                            if c == "device":
                                                 if dev != f[c]:
                                                     adQt = False
-                                            if c == 'reading':
+                                            if c == "reading":
                                                 if read != f[c]:
                                                     adQt = False
                                         if adQt:
@@ -844,21 +934,21 @@ class FhemEventQueue:
                                 if adQ:
                                     if raw_value is False:
                                         ev = {
-                                            'timestamp': dt,
-                                            'devicetype': devtype,
-                                            'device': dev,
-                                            'reading': read,
-                                            'value': val,
-                                            'unit': unit
+                                            "timestamp": dt,
+                                            "devicetype": devtype,
+                                            "device": dev,
+                                            "reading": read,
+                                            "value": val,
+                                            "unit": unit,
                                         }
                                     else:
-                                         ev = {
-                                            'timestamp': dt,
-                                            'devicetype': devtype,
-                                            'device': dev,
-                                            'reading': read,
-                                            'value': full_val,
-                                            'unit': None
+                                        ev = {
+                                            "timestamp": dt,
+                                            "devicetype": devtype,
+                                            "device": dev,
+                                            "reading": read,
+                                            "value": full_val,
+                                            "unit": None,
                                         }
                                     que.put(ev)
                                     # self.log.debug("Event queued for {}".format(ev['device']))
@@ -868,6 +958,6 @@ class FhemEventQueue:
         return
 
     def close(self):
-        '''Stop event thread and close socket.'''
+        """Stop event thread and close socket."""
         self.eventThreadActive = False
-        time.sleep(0.5+self.timeout)
+        time.sleep(0.5 + self.timeout)
