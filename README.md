@@ -1,5 +1,4 @@
 [![PyPI version](https://badge.fury.io/py/fhem.svg)](https://badge.fury.io/py/fhem)
-[![TravisCI Test Status](https://travis-ci.org/domschl/python-fhem.svg?branch=master)](https://travis-ci.org/domschl/python-fhem)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/116e9e988d934aaa9cfbfa5b8aef7f78)](https://www.codacy.com/app/dominik.schloesser/python-fhem?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=domschl/python-fhem&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://domschl.github.io/python-fhem/index.html)
@@ -46,6 +45,7 @@ pip install [-U] -e .
 
 ## History
 
+* 0.7.0 (2023-08-17): [unpublished] Ongoing: move Travis CI -> Github actions, Python 2.x support removed, modernize python packaging.
 * 0.6.6 (2022-11-09): [unpublished] Fix for new option that produces fractional seconds in event data.
 * 0.6.5 (2020-03-24): New option `raw_value` for `FhemEventQueue`. Default `False` (old behavior), on `True`, the full, unparsed reading is returned, without looking for a unit.
 * 0.6.4 (2020-03-24): Bug fix for [#21](https://github.com/domschl/python-fhem/issues/21), Index out-of-range in event loop background thread for non-standard event formats.  

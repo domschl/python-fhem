@@ -146,13 +146,13 @@ if __name__ == "__main__":
     st = FhemSelfTester()
     print("State 1: Object created.")
     config = {
-        "archivename": "./fhem-5.9.tar.gz",
-        "urlpath": "https://fhem.de/fhem-5.9.tar.gz",
+        "archivename": "./fhem-6.0.tar.gz",
+        "urlpath": "https://fhem.de/fhem-6.0.tar.gz",
         "destination": "./fhem",
-        "fhem_file": "./fhem/fhem-5.9/fhem.pl",
-        "config_file": "./fhem/fhem-5.9/fhem.cfg",
-        "fhem_dir": "./fhem/fhem-5.9/",
-        "exec": "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
+        "fhem_file": "./fhem/fhem-6.0/fhem.pl",
+        "config_file": "./fhem/fhem-6.0/fhem.cfg",
+        "fhem_dir": "./fhem/fhem-6.0/",
+        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg",
         "testhost": "localhost",
     }
 

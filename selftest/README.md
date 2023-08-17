@@ -1,6 +1,6 @@
 ## Automatic FHEM installation and python-fhem API self-test for CI.
 
-The selftest tree is only used for continous integration with TravisCI.
+The selftest can be used manually, but are targeted for use with github action CI.
 
 The scripts automatically download the latest FHEM release, install, configure and run it and then use the Python API to 
 perform self-tests.
@@ -25,3 +25,13 @@ It needs to be installed with either:
 * or `pacman -S perl-io-socket-ssl`
 
 If selftests fails on the first SSL connection, it is usually a sign, that the fhem-perl requirements for SSL are not installed.
+
+## Manual test run
+
+- Install `python-fhem`, e.g. by `pip install -e .` in the fhem source directory.
+- Make sure that Perl's `socke::ssl` is installed (s.a.)
+- Run `python selftest.py`
+
+## History
+
+- 2023-08-17: Updated for FHEM 6.0, python 2.x support removed. Prepared move from Travis CI to github actions.
