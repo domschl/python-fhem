@@ -4,6 +4,7 @@ import shutil
 import logging
 import time
 import queue
+import subprocess
 
 from urllib.parse import quote
 from urllib.parse import urlencode
@@ -163,7 +164,8 @@ if __name__ == "__main__":
         "fhem_file": "./fhem/fhem-6.0/fhem.pl",
         "config_file": "./fhem/fhem-6.0/fhem.cfg",
         "fhem_dir": "./fhem/fhem-6.0/",
-        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg &",
+        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg",
+        "cmds": ["perl", "fhem.pl", "fhem.cfg"],
         "testhost": "localhost",
     }
 
@@ -199,6 +201,7 @@ if __name__ == "__main__":
 
     os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
 
+
     certs_dir = os.path.join(config["fhem_dir"], "certs")
     os.system("mkdir {}".format(certs_dir))
     os.system(
@@ -213,8 +216,9 @@ if __name__ == "__main__":
         log.error("Failed to create certificate files!")
         sys.exit(-2)
 
-    ret = os.system(config["exec"])
-    log.info("Fhem startup at {} returned: {}".format(config['exec'], ret))
+    # os.system(config["exec"])
+    subprocess.Popen(config["cmds"], cwd=config['fhem_dir'], close_fds=True)
+    log.info("Fhem startup at {}".format(config['exec']))
     time.sleep(1)
 
     if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
