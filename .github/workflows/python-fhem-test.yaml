@@ -40,7 +40,20 @@ jobs:
       run: |
         python -m pip install ./fhem/dist/*.gz
         rm ./fhem/dist/*
+    - name: Install fhem server
+      run: |
+        wget https://fhem.de/fhem-6.0.tar.gz
+        mkdir fhem
+        cd fhem
+        tar xvf - ../fhem-6.0.tar.gz
+        cd fhem-6.0
+        mkdir certs
+        cd certs
+        openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com
+        cd ..
+        cp ../../selftest/fhem.cfg .
+        perl fhem.pl fhem.cfg
     - name: Test with selftest.py
       run: |
         cd selftest
-        python selftest.py
+        python selftest.py --reuse

@@ -5,6 +5,7 @@ import logging
 import time
 import queue
 import subprocess
+import argparse
 
 from urllib.parse import quote
 from urllib.parse import urlencode
@@ -148,6 +149,17 @@ def create_device(fhi, name, readings):
 
 
 if __name__ == "__main__":
+    # check args for reuse (-r)
+    parser = argparse.ArgumentParser(description="Fhem self-tester")
+    parser.add_argument(
+        "-r",
+        "--reuse",
+        action="store_true",
+        help="Reuse existing FHEM installation",
+    )
+    args = parser.parse_args()
+    reuse = args.reuse
+
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s.%(msecs)03d %(name)s %(levelname)s %(message)s",
@@ -169,77 +181,82 @@ if __name__ == "__main__":
         "testhost": "localhost",
     }
 
+    installed = False
     if (
         st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
         is not None
     ):
         log.info("Fhem is already running!")
-        st.shutdown(fhem_url=config["testhost"], protocol="http", port=8083)
-        time.sleep(1)
-        if (
-            st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
-            is not None
-        ):
-            log.error("Shutdown failed!")
-            sys.exit(-3)
-        log.info("--------------------")
-        log.info("Reinstalling FHEM...")
-
-    if not st.download(config["archivename"], config["urlpath"]):
-        log.error("Download failed.")
-        sys.exit(-1)
-
-    log.info("Starting fhem installation")
-
-    # WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
-    # All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
-    if not st.install(
-        config["archivename"], config["destination"], config["fhem_file"]
-    ):
-        log.info("Install failed")
-        sys.exit(-2)
-
-    os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
-
-    if not os.path.exists(config["config_file"]):
-        log.error("Failed to create config file!")
-        sys.exit(-2)
-
-    certs_dir = os.path.join(config["fhem_dir"], "certs")
-    os.system("mkdir {}".format(certs_dir))
-    os.system(
-        'cd {} && openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com"'.format(
-            certs_dir
-        )
-    )
-
-    cert_file = os.path.join(certs_dir, "server-cert.pem")
-    key_file = os.path.join(certs_dir, "server-key.pem")
-    if not os.path.exists(cert_file) or not os.path.exists(key_file):
-        log.error("Failed to create certificate files!")
-        sys.exit(-2)
-
-    # os.system(config["exec"])
-    process = subprocess.Popen(config["cmds"], cwd=config['fhem_dir'],stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, start_new_session=True)
-    output, error = process.communicate()
-    if process.returncode != 0:
-        raise Exception("Process fhem failed %d %s %s" % (process.returncode, output, error))
-    log.info("Fhem startup at {}: {}".format(config['cmds'], output.decode('utf-8')))
-
-    retry_cnt = 10
-    for i in range(retry_cnt):
-        time.sleep(1)
-
-        if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
-            log.warning("Fhem is NOT (yet) running after install and start!")
-            if i == retry_cnt - 1:
-                log.error("Giving up.")
-                sys.exit(-4)
+        if reuse is True:
+            installed = True
         else:
-            break
+            st.shutdown(fhem_url=config["testhost"], protocol="http", port=8083)
+            time.sleep(1)
+            if (
+                st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
+                is not None
+            ):
+                log.error("Shutdown failed!")
+                sys.exit(-3)
+            log.info("--------------------")
+            log.info("Reinstalling FHEM...")
 
-    log.info("Install should be ok, Fhem running.")
+    if installed is False:
+        if not st.download(config["archivename"], config["urlpath"]):
+            log.error("Download failed.")
+            sys.exit(-1)
+
+        log.info("Starting fhem installation")
+
+        # WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
+        # All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
+        if not st.install(
+            config["archivename"], config["destination"], config["fhem_file"]
+        ):
+            log.info("Install failed")
+            sys.exit(-2)
+
+        os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
+
+        if not os.path.exists(config["config_file"]):
+            log.error("Failed to create config file!")
+            sys.exit(-2)
+
+        certs_dir = os.path.join(config["fhem_dir"], "certs")
+        os.system("mkdir {}".format(certs_dir))
+        os.system(
+            'cd {} && openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com"'.format(
+                certs_dir
+            )
+        )
+
+        cert_file = os.path.join(certs_dir, "server-cert.pem")
+        key_file = os.path.join(certs_dir, "server-key.pem")
+        if not os.path.exists(cert_file) or not os.path.exists(key_file):
+            log.error("Failed to create certificate files!")
+            sys.exit(-2)
+
+        # os.system(config["exec"])
+        process = subprocess.Popen(config["cmds"], cwd=config['fhem_dir'],stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, start_new_session=True)
+        output, error = process.communicate()
+        if process.returncode != 0:
+            raise Exception("Process fhem failed %d %s %s" % (process.returncode, output, error))
+        log.info("Fhem startup at {}: {}".format(config['cmds'], output.decode('utf-8')))
+
+        retry_cnt = 2
+        for i in range(retry_cnt):
+            time.sleep(1)
+
+            if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
+                log.warning("Fhem is NOT (yet) running after install and start!")
+                if i == retry_cnt - 1:
+                    log.error("Giving up.")
+                    sys.exit(-4)
+            else:
+                break
+
+        log.info("Install should be ok, Fhem running.")
 
     connections = [
         {"protocol": "http", "port": 8083},
