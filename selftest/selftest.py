@@ -201,6 +201,10 @@ if __name__ == "__main__":
 
     os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
 
+    if not os.path.exists(config["config_file"]):
+        log.error("Failed to create config file!")
+        sys.exit(-2)
+
 
     certs_dir = os.path.join(config["fhem_dir"], "certs")
     os.system("mkdir {}".format(certs_dir))
