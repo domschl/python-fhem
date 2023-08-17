@@ -69,6 +69,7 @@ class Fhem:
         self.bsock = None
         self.sock = None
         self.https_handler = None
+        self.opener = None
 
         # Set LogLevel
         # self.set_loglevel(loglevel)
@@ -269,6 +270,9 @@ class Fhem:
                 return None
         else:  # HTTP(S)
             paramdata = None
+            if self.opener is not None:
+                install_opener(self.opener)
+
             if self.csrf and len(buf) > 0:
                 if len(self.csrftoken) == 0:
                     self.log.error("CSRF token not available!")
@@ -294,7 +298,7 @@ class Fhem:
                 if self.context is None:
                     ans = urlopen(ccmd, paramdata, timeout=timeout)
                 else:
-                    ans = urlopen(ccmd, paramdata, timeout=timeout, context=self.context)
+                    ans = urlopen(ccmd, paramdata, timeout=timeout) # , context=self.context)
             else:
                 self.log.error(
                     "Invalid URL {}, Failed to send msg, len={}, {}".format(
