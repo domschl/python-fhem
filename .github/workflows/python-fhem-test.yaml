@@ -25,17 +25,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Get perl stuff
+      run: |
         sudo apt install perl libio-socket-ssl-perl
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install twine build
     - name: Build python-fhem package
-      run |
+      run: |
         cd fhem
         cp ../README.md .
         python -m build
     -m name: Install python-fhem
+      run: |
         python -m pip install ./fhem/dist/*.gz
     - name: Test with selftest.py
       run: |
