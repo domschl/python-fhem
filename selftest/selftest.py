@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
     ret = os.system(config["exec"])
     log.info("Fhem startup at {} returned: {}".format(config['exec'], ret))
-    time.sleep(2)
+    time.sleep(5)
 
     if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
         log.error("Fhem is NOT running after install and start!")
