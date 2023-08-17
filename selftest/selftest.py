@@ -139,7 +139,7 @@ def create_device(fhi, name, readings):
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(asctime)s.%(msecs)03d %(levelname)s %(message)s",
+        format="%(asctime)s.%(msecs)03d %(name)s %(levelname)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     print("Start FhemSelfTest")
