@@ -221,11 +221,11 @@ if __name__ == "__main__":
 
     # os.system(config["exec"])
     process = subprocess.Popen(config["cmds"], cwd=config['fhem_dir'],stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE, start_new_session=True)
     output, error = process.communicate()
     if process.returncode != 0:
         raise Exception("Process fhem failed %d %s %s" % (process.returncode, output, error))
-    log.info("Fhem startup at {}: {}".format(config['exec'], output.decode('utf-8')))
+    log.info("Fhem startup at {}: {}".format(config['cmds'], output.decode('utf-8')))
 
     retry_cnt = 10
     for i in range(retry_cnt):
