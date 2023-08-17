@@ -220,8 +220,8 @@ if __name__ == "__main__":
         sys.exit(-2)
 
     # os.system(config["exec"])
-    subprocess.Popen(config["cmds"], cwd=config['fhem_dir'], close_fds=True)
-    log.info("Fhem startup at {}".format(config['exec']))
+    ret = subprocess.Popen(config["cmds"], cwd=config['fhem_dir'], close_fds=True)
+    log.info("Fhem startup at {}: {}".format(config['exec'], ret))
 
     retry_cnt = 10
     for i in range(retry_cnt):
