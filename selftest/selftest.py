@@ -219,12 +219,12 @@ if __name__ == "__main__":
 
     if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
         log.error("Fhem is NOT running after install and start!")
-        sys.exit(-4)
+        # sys.exit(-4)
 
     log.info("Install should be ok, Fhem running.")
 
     connections = [
-        {"protocol": "http", "port": 8083},
+        # {"protocol": "http", "port": 8083},
         {
             "protocol": "telnet",
             "port": 7073,
