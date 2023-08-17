@@ -205,7 +205,6 @@ if __name__ == "__main__":
         log.error("Failed to create config file!")
         sys.exit(-2)
 
-
     certs_dir = os.path.join(config["fhem_dir"], "certs")
     os.system("mkdir {}".format(certs_dir))
     os.system(
@@ -223,11 +222,18 @@ if __name__ == "__main__":
     # os.system(config["exec"])
     subprocess.Popen(config["cmds"], cwd=config['fhem_dir'], close_fds=True)
     log.info("Fhem startup at {}".format(config['exec']))
-    time.sleep(1)
 
-    if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
-        log.error("Fhem is NOT running after install and start!")
-        sys.exit(-4)
+    retry_cnt = 10
+    for i in range(retry_cnt):
+        time.sleep(1)
+
+        if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
+            log.warning("Fhem is NOT (yet) running after install and start!")
+            if i == retry_cnt - 1:
+                log.error("Giving up.")
+                sys.exit(-4)
+        else:
+            break
 
     log.info("Install should be ok, Fhem running.")
 
