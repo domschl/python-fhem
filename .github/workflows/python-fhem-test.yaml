@@ -43,10 +43,10 @@ jobs:
     - name: Install fhem server
       run: |
         cd selftest
-        wget https://fhem.de/fhem-6.0.tar.gz
+        wget -nv https://fhem.de/fhem-6.0.tar.gz
         mkdir fhem
         cd fhem
-        tar xvf - ../fhem-6.0.tar.gz
+        tar -xvzf ../fhem-6.0.tar.gz
         cd fhem-6.0
         mkdir certs
         cd certs
