@@ -213,7 +213,8 @@ if __name__ == "__main__":
         log.error("Failed to create certificate files!")
         sys.exit(-2)
 
-    os.system(config["exec"])
+    ret = os.system(config["exec"])
+    log.info("Fhem startup at {} returned: {}".format(config['exec'], ret))
     time.sleep(2)
 
     if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:

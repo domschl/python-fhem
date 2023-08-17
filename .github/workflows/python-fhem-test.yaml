@@ -39,6 +39,7 @@ jobs:
     - name: Install python-fhem
       run: |
         python -m pip install ./fhem/dist/*.gz
+        rm ./fhem/dist/*
     - name: Test with selftest.py
       run: |
         cd selftest
