@@ -9,7 +9,7 @@ Python FHEM (home automation server) API
 
 Simple API to connect to the [FHEM home automation server](https://fhem.de/) via sockets or http(s), using the telnet or web port on FHEM with optional SSL (TLS) and password or basicAuth support.
 
-**Note:** Python 2.x deprecation warning. `python-fhem` versions 0.6.x will be the last versions supporting Python 2.x.
+**Note:** Starting with verson 0.7.0, Python 2.x is no longer supported with `python-fhem`. If you still require support for Python 2, use versions 0.6.5.
 
 ## Installation
 
@@ -23,28 +23,22 @@ pip install [-U] fhem
 
 ### From source
 
-In `python-fhem/fhem`:
-
-Get a copy of README for the install (required by setup.py):
+To build your own package, install `python-build` and run:
 
 ```bash
-cp ../README.md .
+cd fhem
+python -m build
 ```
 
-then:
+This will create a `dist` directory with the package. Install with:
 
 ```bash
-pip install [-U] .
+pip install [-U] dist/fhem-<version>.tar.gz
 ```
-
-or, as developer installation, allowing inplace editing:
-
-```bash
-pip install [-U] -e .
-```
-
+    
 ## History
 
+* 0.7.0 (2023-08-17): [unpublished] Ongoing: move Travis CI -> Github actions, Python 2.x support removed, modernize python packaging, global states for SSL and authentication removed (support for multiple sessions).
 * 0.6.6 (2022-11-09): [unpublished] Fix for new option that produces fractional seconds in event data.
 * 0.6.5 (2020-03-24): New option `raw_value` for `FhemEventQueue`. Default `False` (old behavior), on `True`, the full, unparsed reading is returned, without looking for a unit.
 * 0.6.4 (2020-03-24): Bug fix for [#21](https://github.com/domschl/python-fhem/issues/21), Index out-of-range in event loop background thread for non-standard event formats.  
@@ -141,12 +135,7 @@ The library can create an event queue that uses a background thread to receive
 and dispatch FHEM events:
 
 ```python
-try:
-    # Python 3.x
-    import queue
-except:
-    # Python 2.x
-    import Queue as queue
+import queue
 import fhem
 
 que = queue.Queue()
@@ -158,6 +147,11 @@ while True:
     print(ev)
     que.task_done()
 ```
+
+## Selftest
+
+For a more complete example, you can look at [`selftest/selftest.py`](https://github.com/domschl/python-fhem/tree/master/selftest). This automatically installs an FHEM server, and runs a number of tests,
+creating devices and checking their state using the various different transports.
 
 # Documentation
 
