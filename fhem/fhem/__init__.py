@@ -69,6 +69,7 @@ class Fhem:
         self.bsock = None
         self.sock = None
         self.https_handler = None
+        self.opener = None
 
         # Set LogLevel
         # self.set_loglevel(loglevel)
@@ -96,31 +97,42 @@ class Fhem:
     def connect(self):
         """create socket connection to server (telnet protocol only)"""
         if self.protocol == "telnet":
-            try:
-                self.log.debug("Creating socket...")
-                if self.ssl:
-                    self.bsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.sock = ssl.wrap_socket(self.bsock)
-                    self.log.info(
-                        "Connecting to {}:{} with SSL (TLS)".format(
-                            self.server, self.port
-                        )
-                    )
-                else:
-                    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.log.info(
-                        "Connecting to {}:{} without SSL".format(self.server, self.port)
-                    )
-
-                self.sock.connect((self.server, self.port))
-                self.connection = True
-                self.log.info("Connected to {}:{}".format(self.server, self.port))
-            except socket.error:
-                self.connection = False
-                self.log.error(
-                    "Failed to connect to {}:{}".format(self.server, self.port)
+            # try:
+            self.log.debug("Creating socket...")
+            if self.ssl:
+                self.bsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                self.sock = context.wrap_socket(self.bsock)
+                self.log.info(
+                    "Connecting to {}:{} with SSL (TLS)".format(self.server, self.port)
                 )
-                return
+            else:
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.log.info(
+                    "Connecting to {}:{} without SSL".format(self.server, self.port)
+                )
+            # except Exception as e:
+            #    self.connection = False
+            #     self.log.error(
+            #         "Failed to create socket to {}:{}: {}".format(self.server, self.port, e)
+            #     )
+            #     return
+
+            self.log.debug("pre-connect (no try/except)")
+            # try:
+            # self.sock.timeout = 5.0
+            self.sock.connect((self.server, self.port))
+            self.log.debug("post-connect")
+            # except Exception as e:
+            #     self.connection = False
+            #     self.log.error(
+            #         "Failed to connect to {}:{}: {}".format(self.server, self.port, e)
+            #     )
+            #     return
+            self.connection = True
+            self.log.info("Connected to {}:{}".format(self.server, self.port))
 
             if self.password != "":
                 # time.sleep(1.0)
@@ -198,6 +210,9 @@ class Fhem:
 
     def _install_opener(self):
         self.opener = None
+        self.auth_handler = None
+        self.password_mgr = None
+        self.context = None
         if self.username != "":
             self.password_mgr = HTTPPasswordMgrWithDefaultRealm()
             self.password_mgr.add_password(
@@ -221,9 +236,9 @@ class Fhem:
         else:
             if self.username != "":
                 self.opener = build_opener(self.auth_handler)
-        if self.opener is not None:
-            self.log.debug("Setting up opener on: {}".format(self.baseurlauth))
-            install_opener(self.opener)
+        # if self.opener is not None:
+        #     self.log.debug("Setting up opener on: {}".format(self.baseurlauth))
+        #     install_opener(self.opener)
 
     def send(self, buf, timeout=10):
         """Sends a buffer to server
@@ -255,6 +270,9 @@ class Fhem:
                 return None
         else:  # HTTP(S)
             paramdata = None
+            # if self.opener is not None:
+            #     install_opener(self.opener)
+
             if self.csrf and len(buf) > 0:
                 if len(self.csrftoken) == 0:
                     self.log.error("CSRF token not available!")
@@ -263,36 +281,46 @@ class Fhem:
                     datas = {"fwcsrf": self.csrftoken}
                     paramdata = urlencode(datas).encode("UTF-8")
 
-            try:
+            # try:
+            if len(buf) > 0:
                 self.log.debug("Cmd: {}".format(buf))
                 cmd = quote(buf)
                 self.log.debug("Cmd-enc: {}".format(cmd))
+            else:
+                cmd = ""
+            if len(cmd) > 0:
+                ccmd = self.baseurl + cmd
+            else:
+                ccmd = self.baseurltoken
 
-                if len(cmd) > 0:
-                    ccmd = self.baseurl + cmd
+            self.log.info("Request: {}".format(ccmd))
+            if ccmd.lower().startswith("http"):
+                if self.opener is not None:
+                    ans = self.opener.open(ccmd, paramdata, timeout=timeout)
                 else:
-                    ccmd = self.baseurltoken
-
-                self.log.info("Request: {}".format(ccmd))
-                if ccmd.lower().startswith("http"):
-                    ans = urlopen(ccmd, paramdata, timeout=timeout)
-                else:
-                    self.log.error(
-                        "Invalid URL {}, Failed to send msg, len={}, {}".format(
-                            ccmd, len(buf), err
+                    if self.context is None:
+                        ans = urlopen(ccmd, paramdata, timeout=timeout)
+                    else:
+                        ans = urlopen(
+                            ccmd, paramdata, timeout=timeout, context=self.context
                         )
+            else:
+                self.log.error(
+                    "Invalid URL {}, Failed to send msg, len={}, {}".format(
+                        ccmd, len(buf), err
                     )
-                    return None
-                data = ans.read()
-                return data
-            except URLError as err:
-                self.connection = False
-                self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
+                )
                 return None
-            except socket.timeout as err:
-                # Python 2.7 fix
-                self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
-                return None
+            data = ans.read()
+            return data
+            # except URLError as err:
+            #     self.connection = False
+            #     self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
+            #     return None
+            # except socket.timeout as err:
+            #     # Python 2.7 fix
+            #     self.log.error("Failed to send msg, len={}, {}".format(len(buf), err))
+            #     return None
 
     def send_cmd(self, msg, timeout=10.0):
         """Sends a command to server.

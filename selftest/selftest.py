@@ -4,6 +4,8 @@ import shutil
 import logging
 import time
 import queue
+import subprocess
+import argparse
 
 from urllib.parse import quote
 from urllib.parse import urlencode
@@ -45,6 +47,8 @@ class FhemSelfTester:
                 f.write(dat)
         except Exception as e:
             self.log.error("Failed to write {}, {}".format(filename, e))
+            return False
+        self.log.debug("Downloaded {} to {}".format(urlpath, filename))
         return True
 
     def install(self, archivename, destination, sanity_check_file):
@@ -91,17 +95,25 @@ class FhemSelfTester:
             tar.close()
         except Exception as e:
             self.log.error("Failed to extract {}, {}".format(archivename, e))
+            return False
+        self.log.debug("Extracted {} to {}".format(archivename, destination))
         return True
 
     def is_running(self, fhem_url="localhost", protocol="http", port=8083):
         """
         Check if an fhem server is already running.
         """
-        fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
-        ver = fh.send_cmd("version")
+        try:
+            fh = fhem.Fhem(fhem_url, protocol=protocol, port=port)
+            ver = fh.send_cmd("version")
+        except Exception as e:
+            ver = None
         if ver is not None:
             fh.close()
+            self.log.warning("Fhem already running at {}".format(fhem_url))
             return ver
+        fh.close()
+        self.log.debug("Fhem not running at {}".format(fhem_url))
         return None
 
     def shutdown(self, fhem_url="localhost", protocol="http", port=8083):
@@ -137,73 +149,114 @@ def create_device(fhi, name, readings):
 
 
 if __name__ == "__main__":
+    # check args for reuse (-r)
+    parser = argparse.ArgumentParser(description="Fhem self-tester")
+    parser.add_argument(
+        "-r",
+        "--reuse",
+        action="store_true",
+        help="Reuse existing FHEM installation",
+    )
+    args = parser.parse_args()
+    reuse = args.reuse
+
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(asctime)s.%(msecs)03d %(levelname)s %(message)s",
+        format="%(asctime)s.%(msecs)03d %(name)s %(levelname)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    print("Start FhemSelfTest")
+    log = logging.getLogger("SelfTesterMainApp")
+    log.info("Start FhemSelfTest")
     st = FhemSelfTester()
-    print("State 1: Object created.")
+    log.info("State 1: Object created.")
     config = {
-        "archivename": "./fhem-5.9.tar.gz",
-        "urlpath": "https://fhem.de/fhem-5.9.tar.gz",
+        "archivename": "./fhem-6.0.tar.gz",
+        "urlpath": "https://fhem.de/fhem-6.0.tar.gz",
         "destination": "./fhem",
-        "fhem_file": "./fhem/fhem-5.9/fhem.pl",
-        "config_file": "./fhem/fhem-5.9/fhem.cfg",
-        "fhem_dir": "./fhem/fhem-5.9/",
-        "exec": "cd fhem/fhem-5.9/ && perl fhem.pl fhem.cfg",
+        "fhem_file": "./fhem/fhem-6.0/fhem.pl",
+        "config_file": "./fhem/fhem-6.0/fhem.cfg",
+        "fhem_dir": "./fhem/fhem-6.0/",
+        "exec": "cd fhem/fhem-6.0/ && perl fhem.pl fhem.cfg",
+        "cmds": ["perl", "fhem.pl", "fhem.cfg"],
         "testhost": "localhost",
     }
 
+    installed = False
     if (
         st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
         is not None
     ):
-        print("Fhem is already running!")
-        st.shutdown(fhem_url=config["testhost"], protocol="http", port=8083)
-        time.sleep(1)
-        if (
-            st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
-            is not None
+        log.info("Fhem is already running!")
+        if reuse is True:
+            installed = True
+        else:
+            st.shutdown(fhem_url=config["testhost"], protocol="http", port=8083)
+            time.sleep(1)
+            if (
+                st.is_running(fhem_url=config["testhost"], protocol="http", port=8083)
+                is not None
+            ):
+                log.error("Shutdown failed!")
+                sys.exit(-3)
+            log.info("--------------------")
+            log.info("Reinstalling FHEM...")
+
+    if installed is False:
+        if not st.download(config["archivename"], config["urlpath"]):
+            log.error("Download failed.")
+            sys.exit(-1)
+
+        log.info("Starting fhem installation")
+
+        # WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
+        # All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
+        if not st.install(
+            config["archivename"], config["destination"], config["fhem_file"]
         ):
-            print("Shutdown failed!")
-            sys.exit(-3)
-        print("--------------------")
-        print("Reinstalling FHEM...")
+            log.info("Install failed")
+            sys.exit(-2)
 
-    if not st.download(config["archivename"], config["urlpath"]):
-        print("Download failed.")
-        sys.exit(-1)
+        os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
 
-    print("Starting fhem installation")
+        if not os.path.exists(config["config_file"]):
+            log.error("Failed to create config file!")
+            sys.exit(-2)
 
-    # WARNING! THIS DELETES ANY EXISTING FHEM SERVER at 'destination'!
-    # All configuration files, databases, logs etc. are DELETED to allow a fresh test install!
-    if not st.install(
-        config["archivename"], config["destination"], config["fhem_file"]
-    ):
-        print("Install failed")
-        sys.exit(-2)
-
-    os.system("cat fhem-config-addon.cfg >> {}".format(config["config_file"]))
-
-    certs_dir = os.path.join(config["fhem_dir"], "certs")
-    os.system("mkdir {}".format(certs_dir))
-    os.system(
-        'cd {} && openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com"'.format(
-            certs_dir
+        certs_dir = os.path.join(config["fhem_dir"], "certs")
+        os.system("mkdir {}".format(certs_dir))
+        os.system(
+            'cd {} && openssl req -newkey rsa:2048 -nodes -keyout server-key.pem -x509 -days 36500 -out server-cert.pem -subj "/C=DE/ST=NRW/L=Earth/O=CompanyName/OU=IT/CN=www.example.com/emailAddress=email@example.com"'.format(
+                certs_dir
+            )
         )
-    )
 
-    os.system(config["exec"])
-    time.sleep(1)
+        cert_file = os.path.join(certs_dir, "server-cert.pem")
+        key_file = os.path.join(certs_dir, "server-key.pem")
+        if not os.path.exists(cert_file) or not os.path.exists(key_file):
+            log.error("Failed to create certificate files!")
+            sys.exit(-2)
 
-    if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
-        print("Fhem is NOT running after install and start!")
-        sys.exit(-4)
+        # os.system(config["exec"])
+        process = subprocess.Popen(config["cmds"], cwd=config['fhem_dir'],stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, start_new_session=True)
+        output, error = process.communicate()
+        if process.returncode != 0:
+            raise Exception("Process fhem failed %d %s %s" % (process.returncode, output, error))
+        log.info("Fhem startup at {}: {}".format(config['cmds'], output.decode('utf-8')))
 
-    print("Install should be ok, Fhem running.")
+        retry_cnt = 2
+        for i in range(retry_cnt):
+            time.sleep(1)
+
+            if st.is_running(fhem_url=config["testhost"], protocol="http", port=8083) is None:
+                log.warning("Fhem is NOT (yet) running after install and start!")
+                if i == retry_cnt - 1:
+                    log.error("Giving up.")
+                    sys.exit(-4)
+            else:
+                break
+
+        log.info("Install should be ok, Fhem running.")
 
     connections = [
         {"protocol": "http", "port": 8083},
@@ -214,7 +267,7 @@ if __name__ == "__main__":
             "password": "secretsauce",
         },
         {"protocol": "telnet", "port": 7072},
-        {"protocol": "https", "port": 8084},
+        {"protocol": "https", "port": 8086},
         {
             "protocol": "https",
             "port": 8085,
@@ -224,11 +277,11 @@ if __name__ == "__main__":
     ]
 
     first = True
-    print("")
-    print("----------------- Fhem ------------")
-    print("Testing python-fhem Fhem():")
+    log.info("")
+    log.info("----------------- Fhem ------------")
+    log.info("Testing python-fhem Fhem():")
     for connection in connections:
-        print("Testing connection to {} via {}".format(config["testhost"], connection))
+        log.info("Testing connection to {} via {}".format(config["testhost"], connection))
         fh = fhem.Fhem(config["testhost"], **connection)
 
         devs = [
@@ -249,13 +302,16 @@ if __name__ == "__main__":
 
         for dev in devs:
             for i in range(10):
-                print("Repetion: {}".format(i + 1))
+                log.debug("Repetion: {}, connection: {}".format(i + 1, fh.connection))
+                if fh.connected() is False:
+                    log.info("Connecting...")
+                    fh.connect()
                 for rd in dev["readings"]:
                     dict_value = fh.get_device_reading(dev["name"], rd, blocking=False)
                     try:
                         value = dict_value["Value"]
                     except:
-                        print(
+                        log.error(
                             "Bad reply reading {} {} -> {}".format(
                                 dev["name"], rd, dict_value
                             )
@@ -263,13 +319,13 @@ if __name__ == "__main__":
                         sys.exit(-7)
 
                     if value == dev["readings"][rd]:
-                        print(
+                        log.debug(
                             "Reading-test {},{}={} ok.".format(
                                 dev["name"], rd, dev["readings"][rd]
                             )
                         )
                     else:
-                        print(
+                        log.error(
                             "Failed to set and read reading! {},{} {} != {}".format(
                                 dev["name"], rd, value, dev["readings"][rd]
                             )
@@ -282,31 +338,29 @@ if __name__ == "__main__":
                 num_temps += 1
         temps = fh.get_readings("temperature", timeout=0.1, blocking=False)
         if len(temps) != num_temps:
-            print(
+            log.error(
                 "There should have been {} devices with temperature reading, but we got {}. Ans: {}".format(
                     num_temps, len(temps), temps
                 )
             )
             sys.exit(-6)
         else:
-            print("Multiread of all devices with 'temperature' reading:   ok.")
+            log.info("Multiread of all devices with 'temperature' reading:   ok.")
 
         states = fh.get_states()
         if len(states) < 5:
-            print("Iconsistent number of states: {}".format(len(states)))
+            log.error("Iconsistent number of states: {}".format(len(states)))
             sys.exit(-7)
         else:
-            print("states received: {}, ok.".format(len(states)))
+            log.info("states received: {}, ok.".format(len(states)))
         fh.close()
-        print("")
 
-    print("")
-    print("---------------Queues--------------------------")
-    print("Testing python-fhem telnet FhemEventQueues():")
+    log.info("---------------Queues--------------------------")
+    log.info("Testing python-fhem telnet FhemEventQueues():")
     for connection in connections:
         if connection["protocol"] != "telnet":
             continue
-        print("Testing connection to {} via {}".format(config["testhost"], connection))
+        log.info("Testing connection to {} via {}".format(config["testhost"], connection))
         fh = fhem.Fhem(config["testhost"], **connections[0])
 
         que = queue.Queue()
@@ -326,7 +380,7 @@ if __name__ == "__main__":
         time.sleep(1.0)
         for dev in devs:
             for i in range(10):
-                print("Repetion: {}".format(i + 1))
+                log.debug("Repetion: {}".format(i + 1))
                 for rd in dev["readings"]:
                     set_reading(fh, dev["name"], rd, 18.0 + i / 0.2)
                     que_events += 1
@@ -344,19 +398,19 @@ if __name__ == "__main__":
             que.task_done()
             ql += 1
 
-        print("Queue length: {}".format(ql))
+        log.debug("Queue length: {}".format(ql))
         if ql != que_events:
-            print(
+            log.error(
                 "FhemEventQueue contains {} entries, expected {} entries, failure.".format(
                     ql, que_events
                 )
             )
             sys.exit(-8)
         else:
-            print("Queue test success, Ok.")
+            log.info("Queue test success, Ok.")
         fh.close()
         fq.close()
         time.sleep(0.5)
-        print("")
 
+    log.info("All tests successfull.")
     sys.exit(0)
