@@ -274,9 +274,25 @@ if __name__ == "__main__":
             "username": "test",
             "password": "secretsauce",
         },
+        {
+            "protocol": "https",
+            "port": 8087,
+            "username": "toast",
+            "password": "salad",
+        },
     ]
 
     first = True
+    devs = [
+        {
+            "name": "clima_sensor1",
+            "readings": {"temperature": 18.2, "humidity": 88.2},
+        },
+        {
+            "name": "clima_sensor2",
+            "readings": {"temperature": 19.1, "humidity": 85.7},
+        },
+    ]
     log.info("")
     log.info("----------------- Fhem ------------")
     log.info("Testing python-fhem Fhem():")
@@ -284,16 +300,6 @@ if __name__ == "__main__":
         log.info("Testing connection to {} via {}".format(config["testhost"], connection))
         fh = fhem.Fhem(config["testhost"], **connection)
 
-        devs = [
-            {
-                "name": "clima_sensor1",
-                "readings": {"temperature": 18.2, "humidity": 88.2},
-            },
-            {
-                "name": "clima_sensor2",
-                "readings": {"temperature": 19.1, "humidity": 85.7},
-            },
-        ]
 
         if first is True:
             for dev in devs:
@@ -355,6 +361,70 @@ if __name__ == "__main__":
             log.info("states received: {}, ok.".format(len(states)))
         fh.close()
 
+    log.info("---------------MultiConnect--------------------")
+    fhm = []
+    for connection in connections[-2:]:
+        log.info("Testing multi-connection to {} via {}".format(config["testhost"], connection))
+        fhm.append(fhem.Fhem(config["testhost"], **connection))
+
+    for dev in devs:
+        for i in range(10):
+            for fh in fhm:
+                log.debug("Repetion: {}, connection: {}".format(i + 1, fh.connection))
+                if fh.connected() is False:
+                    log.info("Connecting...")
+                    fh.connect()
+                for rd in dev["readings"]:
+                    dict_value = fh.get_device_reading(dev["name"], rd, blocking=False)
+                    try:
+                        value = dict_value["Value"]
+                    except:
+                        log.error(
+                            "Bad reply reading {} {} -> {}".format(
+                                dev["name"], rd, dict_value
+                            )
+                        )
+                        sys.exit(-7)
+
+                    if value == dev["readings"][rd]:
+                        log.debug(
+                            "Reading-test {},{}={} ok.".format(
+                                dev["name"], rd, dev["readings"][rd]
+                            )
+                        )
+                    else:
+                        log.error(
+                            "Failed to set and read reading! {},{} {} != {}".format(
+                                dev["name"], rd, value, dev["readings"][rd]
+                            )
+                        )
+                        sys.exit(-5)
+
+    num_temps = 0
+    for dev in devs:
+        if "temperature" in dev["readings"]:
+            num_temps += 1
+    for fh in fhm:
+        temps = fh.get_readings("temperature", timeout=0.1, blocking=False)
+        if len(temps) != num_temps:
+            log.error(
+                "There should have been {} devices with temperature reading, but we got {}. Ans: {}".format(
+                    num_temps, len(temps), temps
+                )
+            )
+            sys.exit(-6)
+        else:
+            log.info("Multiread of all devices with 'temperature' reading:   ok.")
+
+    for fh in fhm:
+        states = fh.get_states()
+        if len(states) < 5:
+            log.error("Iconsistent number of states: {}".format(len(states)))
+            sys.exit(-7)
+        else:
+            log.info("states received: {}, ok.".format(len(states)))
+        fh.close()
+    
     log.info("---------------Queues--------------------------")
     log.info("Testing python-fhem telnet FhemEventQueues():")
     for connection in connections:
