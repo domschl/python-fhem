@@ -106,9 +106,7 @@ class Fhem:
                 context.verify_mode = ssl.CERT_NONE
                 self.sock = context.wrap_socket(self.bsock)
                 self.log.info(
-                    "Connecting to {}:{} with SSL (TLS)".format(
-                        self.server, self.port
-                    )
+                    "Connecting to {}:{} with SSL (TLS)".format(self.server, self.port)
                 )
             else:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -124,7 +122,7 @@ class Fhem:
 
             self.log.debug("pre-connect (no try/except)")
             # try:
-                # self.sock.timeout = 5.0
+            # self.sock.timeout = 5.0
             self.sock.connect((self.server, self.port))
             self.log.debug("post-connect")
             # except Exception as e:
@@ -212,6 +210,9 @@ class Fhem:
 
     def _install_opener(self):
         self.opener = None
+        self.auth_handler = None
+        self.password_mgr = None
+        self.context = None
         if self.username != "":
             self.password_mgr = HTTPPasswordMgrWithDefaultRealm()
             self.password_mgr.add_password(
@@ -233,12 +234,11 @@ class Fhem:
             else:
                 self.opener = build_opener(self.https_handler)
         else:
-            self.context = None
             if self.username != "":
                 self.opener = build_opener(self.auth_handler)
-        if self.opener is not None:
-            self.log.debug("Setting up opener on: {}".format(self.baseurlauth))
-            install_opener(self.opener)
+        # if self.opener is not None:
+        #     self.log.debug("Setting up opener on: {}".format(self.baseurlauth))
+        #     install_opener(self.opener)
 
     def send(self, buf, timeout=10):
         """Sends a buffer to server
@@ -270,8 +270,8 @@ class Fhem:
                 return None
         else:  # HTTP(S)
             paramdata = None
-            if self.opener is not None:
-                install_opener(self.opener)
+            # if self.opener is not None:
+            #     install_opener(self.opener)
 
             if self.csrf and len(buf) > 0:
                 if len(self.csrftoken) == 0:
@@ -295,10 +295,15 @@ class Fhem:
 
             self.log.info("Request: {}".format(ccmd))
             if ccmd.lower().startswith("http"):
-                if self.context is None:
-                    ans = urlopen(ccmd, paramdata, timeout=timeout)
+                if self.opener is not None:
+                    ans = self.opener.open(ccmd, paramdata, timeout=timeout)
                 else:
-                    ans = urlopen(ccmd, paramdata, timeout=timeout) # , context=self.context)
+                    if self.context is None:
+                        ans = urlopen(ccmd, paramdata, timeout=timeout)
+                    else:
+                        ans = urlopen(
+                            ccmd, paramdata, timeout=timeout, context=self.context
+                        )
             else:
                 self.log.error(
                     "Invalid URL {}, Failed to send msg, len={}, {}".format(
