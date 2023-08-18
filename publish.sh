@@ -12,5 +12,6 @@ cp ../README.md .
 rm dist/*
 export PIP_USER=
 python -m build
-# twine upload dist/*
-
+if [[ $1 == "upload" ]]; then
+  twine upload dist/*
+fi
