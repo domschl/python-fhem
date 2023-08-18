@@ -6,10 +6,10 @@ The scripts automatically download the latest FHEM release, install, configure a
 perform self-tests.
 
 Tests performed:
-* All tests are run with both python 2.7 and python 3.x
 * FHEM connections via sockets, secure sockets, HTTP and HTTPS with password.
 * Automatic creation of devices on Fhem (using all connection variants)
 * Aquiring readings from Fhem using all different connection types and python versions
+* Automatic testing of the FhemEventQueue
 
 **WARNING**: Be careful when using this script, e.g. the install-class ***completely erases*** the existing FHEM installation
 within the selftest tree (and all configuration files) to allow clean tests.
@@ -24,13 +24,21 @@ It needs to be installed with either:
 * or `apt-get install libio-socket-ssl-perl`
 * or `pacman -S perl-io-socket-ssl`
 
-If selftests fails on the first SSL connection, it is usually a sign, that the fhem-perl requirements for SSL are not installed.
+If selftests fails on the first SSL connection, it is usually a sign that the fhem-perl requirements for SSL are not installed.
 
 ## Manual test run
 
-- Install `python-fhem`, e.g. by `pip install -e .` in the fhem source directory.
-- Make sure that Perl's `socke::ssl` is installed (s.a.)
+- Make sure `python-fhem` is installed (e.g. `pip install fhem`)
+- Make sure that Perl's `socket::ssl` is installed (s.a.)
 - Run `python selftest.py`
+
+You can run the selftest with option `--reuse` to reuse an existing and running FHEM installation. The selftest requires a number of 
+ports and passwords to be configured. Check out `fhem-config-addon.cfg` for details.
+
+## CI notes
+
+The selftest can be used for CI testing. It is currently used with github actions. Be aware that port `8084` is not available on github actions.
+See `.github/workflows/python-fhem-test.yaml` for details.
 
 ## History
 
