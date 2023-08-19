@@ -38,7 +38,7 @@ pip install [-U] dist/fhem-<version>.tar.gz
     
 ## History
 
-* 0.7.0 (2023-08-17): [unpublished] Ongoing: move Travis CI -> Github actions, Python 2.x support removed, modernize python packaging, global states for SSL and authentication removed (support for multiple sessions).
+* 0.7.0 (2023-08-17): Moved Travis CI -> Github actions, Python 2.x support removed, modernized python packaging, global states for SSL and authentication removed (support for multiple sessions).
 * 0.6.6 (2022-11-09): [unpublished] Fix for new option that produces fractional seconds in event data.
 * 0.6.5 (2020-03-24): New option `raw_value` for `FhemEventQueue`. Default `False` (old behavior), on `True`, the full, unparsed reading is returned, without looking for a unit.
 * 0.6.4 (2020-03-24): Bug fix for [#21](https://github.com/domschl/python-fhem/issues/21), Index out-of-range in event loop background thread for non-standard event formats.  
